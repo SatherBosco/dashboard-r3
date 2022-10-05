@@ -1,0 +1,141 @@
+"use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const deleteFilesComponent_1 = __importDefault(require("../components/deleteFilesComponent"));
+const Financeiro_1 = __importStar(require("../models/Financeiro"));
+const xlsx_1 = __importDefault(require("xlsx"));
+const excel_date_to_js_1 = require("excel-date-to-js");
+class FinanceiroController {
+    getAll(req, res) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                var financeiroData = yield Financeiro_1.default.find();
+                return res.send({ message: "Base Financeiro recuperada do banco de dados.", financeiroData });
+            }
+            catch (_a) {
+                return res.status(400).send({ message: "Falha na solicitação da Base Financeiro." });
+            }
+        });
+    }
+    updateData(req, res) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const files = req.files;
+                const deleteFiles = new deleteFilesComponent_1.default();
+                if (!files || files === undefined || !files["planilha"]) {
+                    deleteFiles.delete();
+                    return res.status(400).send({ message: "Sem arquivo." });
+                }
+                // LER EXCEL
+                let data = [];
+                const file = xlsx_1.default.readFile(files["planilha"][0].path);
+                const sheets = file;
+                for (let i = 0; i < sheets.SheetNames.length; i++) {
+                    const temp = xlsx_1.default.utils.sheet_to_json(file.Sheets[file.SheetNames[i]], { range: 1, defval: "" });
+                    temp.forEach((res) => {
+                        data.push(res);
+                    });
+                }
+                deleteFiles.delete();
+                for (let i = 0; i < data.length; i++) {
+                    if (data[i]["Serie/Numero CTRC"] !== "") {
+                        var serieNumeroCTRC = data[i]["Serie/Numero CTRC"];
+                        var dataDeAutorizacao = (0, excel_date_to_js_1.getJsDateFromExcel)(data[i]["Data de Autorizacao"]);
+                        var cnpjPagador = data[i]["CNPJ Pagador"];
+                        var clientePagador = data[i]["Cliente Pagador"];
+                        var valorDoFrete = data[i]["Valor do Frete"];
+                        var numeroDaFatura = data[i]["Numero da Fatura"];
+                        var dataDeInclusaoDaFatura = data[i]["Data de Inclusao da Fatura"] === "" ? "" : (0, excel_date_to_js_1.getJsDateFromExcel)(data[i]["Data de Inclusao da Fatura"]);
+                        var dataDoVencimento = data[i]["Data do Vencimento"] === "" ? "" : (0, excel_date_to_js_1.getJsDateFromExcel)(data[i]["Data do Vencimento"]);
+                        var unidadeDeCobranca = data[i]["Unidade de Cobranca"];
+                        var tipoDeBaixaFatura = data[i]["Tipo de Baixa Fatura"];
+                        var dataDaLiquidacaoFatura = data[i]["Data da Liquidacao Fatura"] === "" ? "" : (0, excel_date_to_js_1.getJsDateFromExcel)(data[i]["Data da Liquidacao Fatura"]);
+                        var status = numeroDaFatura === "" ? Financeiro_1.FinanceiroStatus.PendenteDeFaturamento : dataDaLiquidacaoFatura === "" ? Financeiro_1.FinanceiroStatus.Faturado : Financeiro_1.FinanceiroStatus.Liquidado;
+                        var updatedAt = new Date();
+                        var inDB = yield Financeiro_1.default.findOne({ serieNumeroCTRC: serieNumeroCTRC });
+                        if (inDB) {
+                            inDB.serieNumeroCTRC = serieNumeroCTRC;
+                            inDB.dataDeAutorizacao = dataDeAutorizacao;
+                            inDB.cnpjPagador = cnpjPagador;
+                            inDB.clientePagador = clientePagador;
+                            inDB.valorDoFrete = valorDoFrete;
+                            inDB.numeroDaFatura = numeroDaFatura;
+                            if (dataDeInclusaoDaFatura instanceof Date)
+                                inDB.dataDeInclusaoDaFatura = dataDeInclusaoDaFatura;
+                            if (dataDoVencimento instanceof Date)
+                                inDB.dataDoVencimento = dataDoVencimento;
+                            inDB.unidadeDeCobranca = unidadeDeCobranca;
+                            inDB.tipoDeBaixaFatura = tipoDeBaixaFatura;
+                            if (dataDaLiquidacaoFatura instanceof Date)
+                                inDB.dataDaLiquidacaoFatura = dataDaLiquidacaoFatura;
+                            inDB.status = status;
+                            inDB.updatedAt = updatedAt;
+                            yield inDB.save();
+                        }
+                        else {
+                            var financeiroObj = {
+                                serieNumeroCTRC: serieNumeroCTRC,
+                                dataDeAutorizacao: dataDeAutorizacao,
+                                cnpjPagador: cnpjPagador,
+                                clientePagador: clientePagador,
+                                valorDoFrete: valorDoFrete,
+                                numeroDaFatura: numeroDaFatura,
+                                unidadeDeCobranca: unidadeDeCobranca,
+                                tipoDeBaixaFatura: tipoDeBaixaFatura,
+                                status: status,
+                                updatedAt: updatedAt,
+                            };
+                            if (dataDeInclusaoDaFatura instanceof Date)
+                                financeiroObj.dataDeInclusaoDaFatura = dataDeInclusaoDaFatura;
+                            if (dataDoVencimento instanceof Date)
+                                financeiroObj.dataDoVencimento = dataDoVencimento;
+                            if (dataDaLiquidacaoFatura instanceof Date)
+                                financeiroObj.dataDaLiquidacaoFatura = dataDaLiquidacaoFatura;
+                            yield Financeiro_1.default.create(financeiroObj);
+                        }
+                    }
+                }
+                // ATT BASE
+                return res.send({ message: "Base Financeiro atualizada." });
+            }
+            catch (_a) {
+                return res.status(400).send({ message: "Falha na atualização da Base Financeiro." });
+            }
+        });
+    }
+}
+exports.default = new FinanceiroController();
