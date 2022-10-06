@@ -1,10 +1,20 @@
 import { Request, Response } from "express";
 import DeleteFiles from "../components/deleteFilesComponent";
+import { format } from 'date-fns'
 
 import Financeiro, { FinanceiroInput, FinanceiroStatus } from "../models/Financeiro";
 
 import xlsx from "xlsx";
 import { getJsDateFromExcel } from "excel-date-to-js";
+
+function transformDate(date: string | number) {
+    if (typeof date === "string" && date.includes("/")) {
+        var dateSplit = date.split("/");
+        return new Date(parseInt(dateSplit[2]), parseInt(dateSplit[1]), parseInt(dateSplit[0]));
+    }
+
+    return getJsDateFromExcel(date);
+}
 
 class FinanceiroController {
     public async getAll(req: Request, res: Response) {
@@ -45,16 +55,16 @@ class FinanceiroController {
             for (let i = 0; i < data.length; i++) {
                 if (data[i]["Serie/Numero CTRC"] !== "") {
                     var serieNumeroCTRC = data[i]["Serie/Numero CTRC"];
-                    var dataDeAutorizacao = getJsDateFromExcel(data[i]["Data de Autorizacao"]);
+                    var dataDeAutorizacao = transformDate(data[i]["Data de Autorizacao"]);
                     var cnpjPagador = data[i]["CNPJ Pagador"];
                     var clientePagador = data[i]["Cliente Pagador"];
                     var valorDoFrete = data[i]["Valor do Frete"];
                     var numeroDaFatura = data[i]["Numero da Fatura"];
-                    var dataDeInclusaoDaFatura = data[i]["Data de Inclusao da Fatura"] === "" ? "" : getJsDateFromExcel(data[i]["Data de Inclusao da Fatura"]);
-                    var dataDoVencimento = data[i]["Data do Vencimento"] === "" ? "" : getJsDateFromExcel(data[i]["Data do Vencimento"]);
+                    var dataDeInclusaoDaFatura = data[i]["Data de Inclusao da Fatura"] === "" ? "" : transformDate(data[i]["Data de Inclusao da Fatura"]);
+                    var dataDoVencimento = data[i]["Data do Vencimento"] === "" ? "" : transformDate(data[i]["Data do Vencimento"]);
                     var unidadeDeCobranca = data[i]["Unidade de Cobranca"];
                     var tipoDeBaixaFatura = data[i]["Tipo de Baixa Fatura"];
-                    var dataDaLiquidacaoFatura = data[i]["Data da Liquidacao Fatura"] === "" ? "" : getJsDateFromExcel(data[i]["Data da Liquidacao Fatura"]);
+                    var dataDaLiquidacaoFatura = data[i]["Data da Liquidacao Fatura"] === "" ? "" : transformDate(data[i]["Data da Liquidacao Fatura"]);
                     var status = numeroDaFatura === "" ? FinanceiroStatus.PendenteDeFaturamento : dataDaLiquidacaoFatura === "" ? FinanceiroStatus.Faturado : FinanceiroStatus.Liquidado;
                     var updatedAt = new Date();
 

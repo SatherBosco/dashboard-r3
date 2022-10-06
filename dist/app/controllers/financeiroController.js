@@ -39,6 +39,13 @@ const deleteFilesComponent_1 = __importDefault(require("../components/deleteFile
 const Financeiro_1 = __importStar(require("../models/Financeiro"));
 const xlsx_1 = __importDefault(require("xlsx"));
 const excel_date_to_js_1 = require("excel-date-to-js");
+function transformDate(date) {
+    if (typeof date === "string" && date.includes("/")) {
+        var dateSplit = date.split("/");
+        return new Date(parseInt(dateSplit[2]), parseInt(dateSplit[1]), parseInt(dateSplit[0]));
+    }
+    return (0, excel_date_to_js_1.getJsDateFromExcel)(date);
+}
 class FinanceiroController {
     getAll(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -74,16 +81,16 @@ class FinanceiroController {
                 for (let i = 0; i < data.length; i++) {
                     if (data[i]["Serie/Numero CTRC"] !== "") {
                         var serieNumeroCTRC = data[i]["Serie/Numero CTRC"];
-                        var dataDeAutorizacao = (0, excel_date_to_js_1.getJsDateFromExcel)(data[i]["Data de Autorizacao"]);
+                        var dataDeAutorizacao = transformDate(data[i]["Data de Autorizacao"]);
                         var cnpjPagador = data[i]["CNPJ Pagador"];
                         var clientePagador = data[i]["Cliente Pagador"];
                         var valorDoFrete = data[i]["Valor do Frete"];
                         var numeroDaFatura = data[i]["Numero da Fatura"];
-                        var dataDeInclusaoDaFatura = data[i]["Data de Inclusao da Fatura"] === "" ? "" : (0, excel_date_to_js_1.getJsDateFromExcel)(data[i]["Data de Inclusao da Fatura"]);
-                        var dataDoVencimento = data[i]["Data do Vencimento"] === "" ? "" : (0, excel_date_to_js_1.getJsDateFromExcel)(data[i]["Data do Vencimento"]);
+                        var dataDeInclusaoDaFatura = data[i]["Data de Inclusao da Fatura"] === "" ? "" : transformDate(data[i]["Data de Inclusao da Fatura"]);
+                        var dataDoVencimento = data[i]["Data do Vencimento"] === "" ? "" : transformDate(data[i]["Data do Vencimento"]);
                         var unidadeDeCobranca = data[i]["Unidade de Cobranca"];
                         var tipoDeBaixaFatura = data[i]["Tipo de Baixa Fatura"];
-                        var dataDaLiquidacaoFatura = data[i]["Data da Liquidacao Fatura"] === "" ? "" : (0, excel_date_to_js_1.getJsDateFromExcel)(data[i]["Data da Liquidacao Fatura"]);
+                        var dataDaLiquidacaoFatura = data[i]["Data da Liquidacao Fatura"] === "" ? "" : transformDate(data[i]["Data da Liquidacao Fatura"]);
                         var status = numeroDaFatura === "" ? Financeiro_1.FinanceiroStatus.PendenteDeFaturamento : dataDaLiquidacaoFatura === "" ? Financeiro_1.FinanceiroStatus.Faturado : Financeiro_1.FinanceiroStatus.Liquidado;
                         var updatedAt = new Date();
                         var inDB = yield Financeiro_1.default.findOne({ serieNumeroCTRC: serieNumeroCTRC });
