@@ -42,7 +42,7 @@ const excel_date_to_js_1 = require("excel-date-to-js");
 function transformDate(date) {
     if (typeof date === "string" && date.includes("/")) {
         var dateSplit = date.split("/");
-        return new Date(parseInt(dateSplit[2]), parseInt(dateSplit[1]), parseInt(dateSplit[0]));
+        return new Date(parseInt(dateSplit[2]) + 100, parseInt(dateSplit[1]), parseInt(dateSplit[0]));
     }
     return (0, excel_date_to_js_1.getJsDateFromExcel)(date);
 }
@@ -72,7 +72,7 @@ class FinanceiroController {
                 const file = xlsx_1.default.readFile(files["planilha"][0].path);
                 const sheets = file;
                 for (let i = 0; i < sheets.SheetNames.length; i++) {
-                    const temp = xlsx_1.default.utils.sheet_to_json(file.Sheets[file.SheetNames[i]], { range: 1, defval: "" });
+                    const temp = xlsx_1.default.utils.sheet_to_json(file.Sheets[file.SheetNames[i]], { range: 1, defval: "", raw: false });
                     temp.forEach((res) => {
                         data.push(res);
                     });
@@ -86,7 +86,6 @@ class FinanceiroController {
                         var clientePagador = data[i]["Cliente Pagador"];
                         var valorDoFrete = parseFloat(((data[i]["Valor do Frete"].toString()).replace(".", "")).replace(",", "")) / 100;
                         var numeroDaFatura = data[i]["Numero da Fatura"];
-                        console.log(data[i]["Data de Inclusao da Fatura"]);
                         var dataDeInclusaoDaFatura = data[i]["Data de Inclusao da Fatura"] === "" || data[i]["Data de Inclusao da Fatura"] === undefined ? "" : transformDate(data[i]["Data de Inclusao da Fatura"]);
                         var dataDoVencimento = data[i]["Data do Vencimento"] === "" || data[i]["Data do Vencimento"] === undefined ? "" : transformDate(data[i]["Data do Vencimento"]);
                         var unidadeDeCobranca = data[i]["Unidade de Cobranca"];
