@@ -42,7 +42,11 @@ const excel_date_to_js_1 = require("excel-date-to-js");
 function transformDate(date) {
     if (typeof date === "string" && date.includes("/")) {
         var dateSplit = date.split("/");
-        return new Date(parseInt(dateSplit[2]) + 100, parseInt(dateSplit[1]), parseInt(dateSplit[0]));
+        var year = parseInt(dateSplit[2]);
+        year = year > 2000 ? year : year + 2000;
+        var month = parseInt(dateSplit[1]);
+        var day = parseInt(dateSplit[0]);
+        return new Date(year, month, day);
     }
     return (0, excel_date_to_js_1.getJsDateFromExcel)(date);
 }
@@ -93,6 +97,17 @@ class FinanceiroController {
                         var dataDaLiquidacaoFatura = data[i]["Data da Liquidacao Fatura"] === "" || data[i]["Data da Liquidacao Fatura"] === undefined ? "" : transformDate(data[i]["Data da Liquidacao Fatura"]);
                         var status = numeroDaFatura === "" ? Financeiro_1.FinanceiroStatus.PendenteDeFaturamento : dataDaLiquidacaoFatura === "" ? Financeiro_1.FinanceiroStatus.Faturado : Financeiro_1.FinanceiroStatus.Liquidado;
                         var updatedAt = new Date();
+                        console.log(data[i]["Serie/Numero CTRC"]);
+                        console.log(data[i]["Data de Autorizacao"]);
+                        console.log(dataDeAutorizacao);
+                        console.log(data[i]["Data de Inclusao da Fatura"]);
+                        console.log(dataDeInclusaoDaFatura);
+                        console.log(data[i]["Data do Vencimento"]);
+                        console.log(dataDoVencimento);
+                        console.log(data[i]["Data da Liquidacao Fatura"]);
+                        console.log(dataDaLiquidacaoFatura);
+                        console.log(data[i]["Valor do Frete"]);
+                        console.log(valorDoFrete);
                         var inDB = yield Financeiro_1.default.findOne({ serieNumeroCTRC: serieNumeroCTRC });
                         if (inDB) {
                             inDB.serieNumeroCTRC = serieNumeroCTRC;
