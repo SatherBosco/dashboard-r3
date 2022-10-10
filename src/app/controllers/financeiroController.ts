@@ -71,18 +71,6 @@ class FinanceiroController {
                     var status = numeroDaFatura === "" ? FinanceiroStatus.PendenteDeFaturamento : dataDaLiquidacaoFatura === "" ? FinanceiroStatus.Faturado : FinanceiroStatus.Liquidado;
                     var updatedAt = new Date();
 
-                    console.log(data[i]["Serie/Numero CTRC"]);
-                    console.log(data[i]["Data de Autorizacao"]);
-                    console.log(dataDeAutorizacao);
-                    console.log(data[i]["Data de Inclusao da Fatura"]);
-                    console.log(dataDeInclusaoDaFatura);
-                    console.log(data[i]["Data do Vencimento"]);
-                    console.log(dataDoVencimento);
-                    console.log(data[i]["Data da Liquidacao Fatura"]);
-                    console.log(dataDaLiquidacaoFatura);
-                    console.log(data[i]["Valor do Frete"]);
-                    console.log(valorDoFrete);
-
                     var inDB = await Financeiro.findOne({ serieNumeroCTRC: serieNumeroCTRC });
                     if (inDB) {
                         inDB.serieNumeroCTRC = serieNumeroCTRC;
