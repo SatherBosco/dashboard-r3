@@ -85,7 +85,6 @@ class FinanceiroController {
                         var cnpjPagador = data[i]["CNPJ Pagador"];
                         var clientePagador = data[i]["Cliente Pagador"];
                         var valorDoFrete = parseFloat(((data[i]["Valor do Frete"].toString()).replace(".", "")).replace(",", "")) / 100;
-                        console.log(valorDoFrete);
                         var numeroDaFatura = data[i]["Numero da Fatura"];
                         var dataDeInclusaoDaFatura = data[i]["Data de Inclusao da Fatura"] === "" ? "" : transformDate(data[i]["Data de Inclusao da Fatura"]);
                         var dataDoVencimento = data[i]["Data do Vencimento"] === "" ? "" : transformDate(data[i]["Data do Vencimento"]);
