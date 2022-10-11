@@ -61,7 +61,7 @@ class FinanceiroController {
                     var dataDeAutorizacao = transformDate(data[i]["Data de Autorizacao"]);
                     var cnpjPagador = data[i]["CNPJ Pagador"];
                     var clientePagador = data[i]["Cliente Pagador"];
-                    var valorDoFrete = parseFloat(((data[i]["Valor do Frete"].toString()).replace(".", "")).replace(",","")) / 100;
+                    var valorDoFrete = parseFloat((data[i]["Valor do Frete"].toString()).replace(",", "."));
                     var numeroDaFatura = data[i]["Numero da Fatura"];
                     var dataDeInclusaoDaFatura = data[i]["Data de Inclusao da Fatura"] === "" || data[i]["Data de Inclusao da Fatura"] === undefined ? "" : transformDate(data[i]["Data de Inclusao da Fatura"]);
                     var dataDoVencimento = data[i]["Data do Vencimento"] === "" || data[i]["Data do Vencimento"] === undefined ? "" : transformDate(data[i]["Data do Vencimento"]);
