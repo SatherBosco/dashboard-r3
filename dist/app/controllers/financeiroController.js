@@ -44,7 +44,7 @@ function transformDate(date) {
         var dateSplit = date.split("/");
         var year = parseInt(dateSplit[2]);
         year = year > 2000 ? year : year + 2000;
-        var month = parseInt(dateSplit[1]);
+        var month = parseInt(dateSplit[1]) - 1;
         var day = parseInt(dateSplit[0]);
         return new Date(year, month, day);
     }
