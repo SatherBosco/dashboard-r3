@@ -5,6 +5,7 @@ import HealthController from "./controllers/healthController";
 
 import uploadConfig from './middlewares/upload';
 import FinanceiroController from "./controllers/financeiroController";
+import RavexController from "./controllers/ravexController";
 import AuthManagerController from "./controllers/authManagerController";
 
 const routes = Router();
@@ -25,6 +26,7 @@ routes.post("/auth/authenticate", new AuthManagerController().authenticate);
 
 routes.get("/financeiro/", FinanceiroController.getAll);
 routes.post("/financeiro/", upload.fields([{name: 'planilha', maxCount: 1}]), FinanceiroController.updateData);
+routes.post("/ravex/", upload.fields([{name: 'planilha', maxCount: 1}]), RavexController.manipulateData);
 
 
 export default routes;
