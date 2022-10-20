@@ -1,26 +1,58 @@
 import { Request, Response } from "express";
 import DeleteFiles from "../components/deleteFilesComponent";
 
-import Financeiro, { FinanceiroInput, FinanceiroStatus } from "../models/Financeiro";
-
 import xlsx from "xlsx";
-import { getJsDateFromExcel } from "excel-date-to-js";
-import { writeFileSync } from "fs";
 
-function transformDate(date: string | number) {
-    if (typeof date === "string" && date.includes("/")) {
-        var dateSplit = date.split("/");
-        var year = parseInt(dateSplit[2]);
-        year = year > 2000 ? year : year + 2000;
-        var month = parseInt(dateSplit[1]) - 1;
-        var day = parseInt(dateSplit[0]);
-        return new Date(year, month, day);
-    }
+type RavexInputModel = {
+    placa: string;
+    motorista: string;
+    cidade: string;
+    codigoDoCliente: string;
+    cliente: string;
+    pesoBruto: number;
+    notasPrevistas: number;
+    notaFiscalHomologada: boolean;
+    quantidadeDeEntregas: number;
+    statusNF: boolean;
+};
 
-    return getJsDateFromExcel(date);
-}
+type RavexPropsModel = {
+    placa: string;
+    motorista: string;
+    cidade: string;
+    codigoDoCliente: string;
+    quantidadeDeEntregas: number;
+    entregasFeitas: number;
+    quantidadeDeHomologacoes: number;
+    homologacoesFeitas: number;
+    pesoTotal: number;
+    pesoEntregue: number;
+};
+
+type RavexOutputModel = {
+    placa: string;
+    motorista: string;
+    cidade: string;
+    quantidadeDeEntregas: number;
+    entregas: number;
+    homologacao: number;
+    efetividade: number;
+};
 
 class RavexController {
+    private static normalizeUpperCase(text: string) {
+        return text.toUpperCase();
+    }
+
+    private static normalizeName(name: string) {
+        name = name.toLowerCase();
+        name = name.replace(/\s/g, (letter) => (letter = " "));
+        name = name.replace(/[^a-zA-ZÀ-ü\s]/g, (letter) => (letter = ""));
+        name = name.trim();
+        name = name.replace(/(^\w{1})|(\s+\w{1})/g, (letter) => letter.toUpperCase());
+        return name;
+    }
+
     public async manipulateData(req: Request, res: Response) {
         try {
             const files = req.files as { [fieldname: string]: Express.Multer.File[] };
@@ -32,79 +64,155 @@ class RavexController {
                 return res.status(400).send({ message: "Sem arquivo." });
             }
 
-            console.log("chegou 1");
             // LER EXCEL
-            // let data: any[] = [];
-            // const file = xlsx.readFile(files["planilha"][0].path);
-            // const sheets = file;
-            
-            // for (let i = 0; i < sheets.SheetNames.length; i++) {
-                //     const temp = xlsx.utils.sheet_to_json(file.Sheets[file.SheetNames[i]], { range: 1, defval: "", raw: false });
-                //     temp.forEach((res) => {
-                    //         data.push(res);
-                    //     });
-                    // }
-                    
-                    deleteFiles.delete();
+            let ravexData: any[] = [];
+            const file = xlsx.readFile(files["planilha"][0].path);
+            const sheets = file;
 
-            // var ravexData;
+            for (let i = 0; i < sheets.SheetNames.length; i++) {
+                const temp = xlsx.utils.sheet_to_json(file.Sheets[file.SheetNames[i]], { range: 1, defval: "", raw: false });
+                temp.forEach((res) => {
+                    ravexData.push(res);
+                });
+            }
 
-            // for (let i = 0; i < data.length; i++) {
-            //     if (data[i]["Transportadora"] === "Maggi Motos") {
-            //         var serieNumeroCTRC = data[i]["Serie/Numero CTRC"];
-            //         var dataDeAutorizacao = transformDate(data[i]["Data de Autorizacao"]);
-            //         var cnpjPagador = data[i]["CNPJ Pagador"];
-            //         var clientePagador = data[i]["Cliente Pagador"];
-            //         var valorDoFrete = parseFloat((data[i]["Valor do Frete"].toString()).replace(",", "."));
-            //         var numeroDaFatura = data[i]["Numero da Fatura"];
-            //         var dataDeInclusaoDaFatura = data[i]["Data de Inclusao da Fatura"] === "" || data[i]["Data de Inclusao da Fatura"] === undefined ? "" : transformDate(data[i]["Data de Inclusao da Fatura"]);
-            //         var dataDoVencimento = data[i]["Data do Vencimento"] === "" || data[i]["Data do Vencimento"] === undefined ? "" : transformDate(data[i]["Data do Vencimento"]);
-            //         var unidadeDeCobranca = data[i]["Unidade de Cobranca"];
-            //         var tipoDeBaixaFatura = data[i]["Tipo de Baixa Fatura"];
-            //         var dataDaLiquidacaoFatura = data[i]["Data da Liquidacao Fatura"] === "" || data[i]["Data da Liquidacao Fatura"] === undefined ? "" : transformDate(data[i]["Data da Liquidacao Fatura"]);
-            //         var status = numeroDaFatura === "" ? FinanceiroStatus.PendenteDeFaturamento : dataDaLiquidacaoFatura === "" ? FinanceiroStatus.Faturado : FinanceiroStatus.Liquidado;
-            //         var updatedAt = new Date();
-            
-            //         // ESCREVER NOVO ARQUIVO
-            //     }
-            // }
-            
-            // ATT BASE
-            
-            console.log("chegou 2");
-            const dataAuxWrite = [
-                { name: 'Diary', code: 'diary_code', author: 'Pagorn' },
-                { name: 'Note', code: 'note_code', author: 'Pagorn' },
-                { name: 'Medium', code: 'medium_code', author: 'Pagorn' },
-            ]
-            console.log("chegou 3");
-            const workSheet = xlsx.utils.json_to_sheet(dataAuxWrite);
-            console.log("chegou 4");
-            const workBook = xlsx.utils.book_new();
-            console.log("chegou 5");
-            xlsx.utils.book_append_sheet(workBook, workSheet, "Sheet 1");
-            console.log("chegou 6");
-            xlsx.writeFile(workBook, "./sample.xlsx");
-            console.log("chegou 7");
-            
-            var options = {
-                root: "./",
-            };
-            
-            console.log("chegou 8");
-            var fileName = "sample.xlsx";
-            console.log("chegou 9");
-            res.sendFile(fileName, options, function (err) {
-                if (err) {
-                    console.log(err);
-                    // next(err);
-                } else {
-                    console.log("Sent:", fileName);
-                    // next();
+            deleteFiles.delete();
+
+            var dataInput: RavexInputModel[] = [];
+
+            for (let i = 0; i < ravexData.length; i++) {
+                if (ravexData[i]["Transportadora"] === "Maggi Motos") {
+                    var model: RavexInputModel = {
+                        placa: ravexData[i]["Placa"],
+                        motorista: ravexData[i]["Motorista"] === "" ? "Sem nome" : ravexData[i]["Motorista"],
+                        cidade: ravexData[i]["Cidade"],
+                        codigoDoCliente: ravexData[i]["Código do cliente"],
+                        cliente: ravexData[i]["Cliente"],
+                        pesoBruto: parseFloat(ravexData[i]["Peso bruto (NF)"].toString().replace(",", ".")),
+                        notasPrevistas: parseInt(ravexData[i]["Notas previstas"]),
+                        notaFiscalHomologada: ravexData[i]["Nota fiscal homologada"] == "Sim" ? true : false,
+                        quantidadeDeEntregas: parseInt(ravexData[i]["Quantidade de entregas"]),
+                        statusNF: !ravexData[i]["Status NF"].includes("Reentrega"),
+                    };
+
+                    dataInput.push(model);
+                }
+            }
+
+            var dataProps: RavexPropsModel[] = [];
+
+            dataInput.forEach((element) => {
+                var motoristaFilteredInProps = dataProps.filter((itemInFilter) => itemInFilter.motorista === element.motorista);
+
+                if (motoristaFilteredInProps.length === 0) {
+                    var motoristaFilteredInInput = dataInput.filter((itemInFilter) => itemInFilter.motorista === element.motorista);
+
+                    var dataListAux: RavexPropsModel[] = [];
+
+                    motoristaFilteredInInput.forEach((entregas) => {
+                        var clienteFiltered = dataListAux.filter((itemInFilter) => itemInFilter.codigoDoCliente === entregas.codigoDoCliente);
+
+                        if (clienteFiltered.length === 0) {
+                            dataListAux.push({
+                                placa: entregas.placa,
+                                motorista: entregas.motorista,
+                                cidade: entregas.cidade,
+                                codigoDoCliente: entregas.codigoDoCliente,
+                                quantidadeDeEntregas: entregas.quantidadeDeEntregas,
+                                entregasFeitas: entregas.statusNF ? 1 : 0,
+                                quantidadeDeHomologacoes: 1,
+                                homologacoesFeitas: entregas.notaFiscalHomologada ? 1 : 0,
+                                pesoTotal: entregas.pesoBruto,
+                                pesoEntregue: entregas.statusNF ? entregas.pesoBruto : 0,
+                            });
+                        } else {
+                            var index = dataListAux
+                                .map(function (e) {
+                                    return e.codigoDoCliente;
+                                })
+                                .indexOf(entregas.codigoDoCliente);
+
+                            if (entregas.statusNF) dataListAux[index].entregasFeitas = 1;
+
+                            dataListAux[index].quantidadeDeHomologacoes += 1;
+                            if (entregas.notaFiscalHomologada) dataListAux[index].homologacoesFeitas += 1;
+
+                            dataListAux[index].pesoTotal += entregas.pesoBruto;
+                            if (entregas.statusNF) dataListAux[index].pesoEntregue += entregas.pesoBruto;
+                        }
+                    });
+
+                    var dataAux: RavexPropsModel = {
+                        placa: dataListAux[0].placa,
+                        motorista: dataListAux[0].motorista,
+                        cidade: dataListAux[0].cidade,
+                        codigoDoCliente: dataListAux[0].codigoDoCliente,
+                        quantidadeDeEntregas: dataListAux[0].quantidadeDeEntregas,
+                        entregasFeitas: 0,
+                        quantidadeDeHomologacoes: 0,
+                        homologacoesFeitas: 0,
+                        pesoTotal: 0,
+                        pesoEntregue: 0,
+                    };
+                    for (let index = 0; index < dataListAux.length; index++) {
+                        if (dataListAux[index].entregasFeitas === 1) {
+                            dataListAux[index].pesoEntregue = dataListAux[index].pesoTotal;
+                        }
+
+                        dataAux.entregasFeitas += dataListAux[index].entregasFeitas;
+                        dataAux.quantidadeDeHomologacoes += dataListAux[index].quantidadeDeHomologacoes;
+                        dataAux.homologacoesFeitas += dataListAux[index].homologacoesFeitas;
+                        dataAux.pesoTotal += dataListAux[index].pesoTotal;
+                        dataAux.pesoEntregue += dataListAux[index].pesoEntregue;
+                    }
+                    dataProps.push(dataAux);
                 }
             });
+
+            var data: RavexOutputModel[] = [];
+
+            dataProps.forEach((element) => {
+                data.push({
+                    placa: RavexController.normalizeUpperCase(element.placa),
+                    motorista: RavexController.normalizeName(element.motorista),
+                    cidade: RavexController.normalizeUpperCase(element.cidade),
+                    quantidadeDeEntregas: element.quantidadeDeEntregas,
+                    entregas: element.entregasFeitas / element.quantidadeDeEntregas,
+                    homologacao: element.homologacoesFeitas / element.quantidadeDeHomologacoes,
+                    efetividade: element.pesoEntregue / element.pesoTotal,
+                });
+            });
+
+            // -------------------------------------------WRITE EXCEL-------------------------------------------
+            // const dataAuxWrite = [
+            //     { name: 'Diary', code: 'diary_code', author: 'Pagorn' },
+            //     { name: 'Note', code: 'note_code', author: 'Pagorn' },
+            //     { name: 'Medium', code: 'medium_code', author: 'Pagorn' },
+            // ]
+            // const workSheet = xlsx.utils.json_to_sheet(dataAuxWrite);
+            // const workBook = xlsx.utils.book_new();
+            // xlsx.utils.book_append_sheet(workBook, workSheet, "Sheet 1");
+            // xlsx.writeFile(workBook, "./sample.xlsx");
+
+            // var options = {
+            //     root: "./",
+            // };
+
+            // var fileName = "sample.xlsx";
+            // res.sendFile(fileName, options, function (err) {
+            //     if (err) {
+            //         console.log(err);
+            //         // next(err);
+            //     } else {
+            //         console.log("Sent:", fileName);
+            //         // next();
+            //     }
+            // });
+            // -------------------------------------------WRITE EXCEL-------------------------------------------
+
+            return res.send({ message: "Dados lidos com sucesso.", data });
         } catch {
-            return res.status(400).send({ message: "Falha na atualização da Base Financeiro." });
+            return res.status(400).send({ message: "Falha na geração da planilha de desempenho." });
         }
     }
 }
