@@ -63,9 +63,11 @@ class RavexController {
                 return res.status(400).send({ message: "Sem arquivo." });
             }
 
+            // console.log(files["planilha"][0]);
+
             // LER EXCEL
             let ravexData: any[] = [];
-            const file = xlsx.readFile(files["planilha"][0].path);
+            const file = xlsx.readFile(files["planilha"][0].path, {codepage: 874});
             const sheets = file;
 
             for (let i = 0; i < sheets.SheetNames.length; i++) {
