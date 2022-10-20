@@ -40,7 +40,7 @@ class RavexController {
                 const file = xlsx_1.default.readFile(files["planilha"][0].path);
                 const sheets = file;
                 for (let i = 0; i < sheets.SheetNames.length; i++) {
-                    const temp = xlsx_1.default.utils.sheet_to_json(file.Sheets[file.SheetNames[i]], { range: 1, defval: "", raw: false });
+                    const temp = xlsx_1.default.utils.sheet_to_json(file.Sheets[file.SheetNames[i]], { defval: "", raw: false });
                     temp.forEach((res) => {
                         ravexData.push(res);
                     });
@@ -78,12 +78,12 @@ class RavexController {
                                     motorista: entregas.motorista,
                                     cidade: entregas.cidade,
                                     codigoDoCliente: entregas.codigoDoCliente,
-                                    quantidadeDeEntregas: entregas.quantidadeDeEntregas,
+                                    quantidadeDeEntregas: 1,
                                     entregasFeitas: entregas.statusNF ? 1 : 0,
                                     quantidadeDeHomologacoes: 1,
                                     homologacoesFeitas: entregas.notaFiscalHomologada ? 1 : 0,
                                     pesoTotal: entregas.pesoBruto,
-                                    pesoEntregue: entregas.statusNF ? entregas.pesoBruto : 0,
+                                    pesoEntregue: 0,
                                 });
                             }
                             else {
@@ -98,8 +98,6 @@ class RavexController {
                                 if (entregas.notaFiscalHomologada)
                                     dataListAux[index].homologacoesFeitas += 1;
                                 dataListAux[index].pesoTotal += entregas.pesoBruto;
-                                if (entregas.statusNF)
-                                    dataListAux[index].pesoEntregue += entregas.pesoBruto;
                             }
                         });
                         var dataAux = {
@@ -107,7 +105,7 @@ class RavexController {
                             motorista: dataListAux[0].motorista,
                             cidade: dataListAux[0].cidade,
                             codigoDoCliente: dataListAux[0].codigoDoCliente,
-                            quantidadeDeEntregas: dataListAux[0].quantidadeDeEntregas,
+                            quantidadeDeEntregas: dataListAux.length,
                             entregasFeitas: 0,
                             quantidadeDeHomologacoes: 0,
                             homologacoesFeitas: 0,

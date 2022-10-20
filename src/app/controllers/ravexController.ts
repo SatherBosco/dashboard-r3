@@ -1,6 +1,5 @@
 import { Request, Response } from "express";
 import DeleteFiles from "../components/deleteFilesComponent";
-
 import xlsx from "xlsx";
 
 type RavexInputModel = {
@@ -70,7 +69,7 @@ class RavexController {
             const sheets = file;
 
             for (let i = 0; i < sheets.SheetNames.length; i++) {
-                const temp = xlsx.utils.sheet_to_json(file.Sheets[file.SheetNames[i]], { range: 1, defval: "", raw: false });
+                const temp = xlsx.utils.sheet_to_json(file.Sheets[file.SheetNames[i]], { defval: "", raw: false });
                 temp.forEach((res) => {
                     ravexData.push(res);
                 });
@@ -86,7 +85,7 @@ class RavexController {
                         placa: ravexData[i]["Placa"],
                         motorista: ravexData[i]["Motorista"] === "" ? "Sem nome" : ravexData[i]["Motorista"],
                         cidade: ravexData[i]["Cidade"],
-                        codigoDoCliente: ravexData[i]["Código do cliente"],
+                        codigoDoCliente: ravexData[i]["Código do cliente"],//C�digo do cliente
                         cliente: ravexData[i]["Cliente"],
                         pesoBruto: parseFloat(ravexData[i]["Peso bruto (NF)"].toString().replace(",", ".")),
                         notasPrevistas: parseInt(ravexData[i]["Notas previstas"]),
@@ -118,12 +117,12 @@ class RavexController {
                                 motorista: entregas.motorista,
                                 cidade: entregas.cidade,
                                 codigoDoCliente: entregas.codigoDoCliente,
-                                quantidadeDeEntregas: entregas.quantidadeDeEntregas,
+                                quantidadeDeEntregas: 1,
                                 entregasFeitas: entregas.statusNF ? 1 : 0,
                                 quantidadeDeHomologacoes: 1,
                                 homologacoesFeitas: entregas.notaFiscalHomologada ? 1 : 0,
                                 pesoTotal: entregas.pesoBruto,
-                                pesoEntregue: entregas.statusNF ? entregas.pesoBruto : 0,
+                                pesoEntregue: 0,
                             });
                         } else {
                             var index = dataListAux
@@ -138,7 +137,6 @@ class RavexController {
                             if (entregas.notaFiscalHomologada) dataListAux[index].homologacoesFeitas += 1;
 
                             dataListAux[index].pesoTotal += entregas.pesoBruto;
-                            if (entregas.statusNF) dataListAux[index].pesoEntregue += entregas.pesoBruto;
                         }
                     });
 
@@ -147,7 +145,7 @@ class RavexController {
                         motorista: dataListAux[0].motorista,
                         cidade: dataListAux[0].cidade,
                         codigoDoCliente: dataListAux[0].codigoDoCliente,
-                        quantidadeDeEntregas: dataListAux[0].quantidadeDeEntregas,
+                        quantidadeDeEntregas: dataListAux.length,
                         entregasFeitas: 0,
                         quantidadeDeHomologacoes: 0,
                         homologacoesFeitas: 0,
