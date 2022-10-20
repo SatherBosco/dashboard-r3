@@ -8,6 +8,7 @@ const multer_1 = __importDefault(require("multer"));
 const healthController_1 = __importDefault(require("./controllers/healthController"));
 const upload_1 = __importDefault(require("./middlewares/upload"));
 const financeiroController_1 = __importDefault(require("./controllers/financeiroController"));
+const ravexController_1 = __importDefault(require("./controllers/ravexController"));
 const authManagerController_1 = __importDefault(require("./controllers/authManagerController"));
 const routes = (0, express_1.Router)();
 const upload = (0, multer_1.default)(upload_1.default);
@@ -22,4 +23,5 @@ routes.post("/auth/authenticate", new authManagerController_1.default().authenti
 // routes.post("/auth/change-password", AuthController.changePassword);
 routes.get("/financeiro/", financeiroController_1.default.getAll);
 routes.post("/financeiro/", upload.fields([{ name: 'planilha', maxCount: 1 }]), financeiroController_1.default.updateData);
+routes.post("/ravex/", upload.fields([{ name: 'planilha', maxCount: 1 }]), ravexController_1.default.manipulateData);
 exports.default = routes;
