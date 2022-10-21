@@ -14,6 +14,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const deleteFilesComponent_1 = __importDefault(require("../components/deleteFilesComponent"));
 const xlsx_1 = __importDefault(require("xlsx"));
+const fs_1 = __importDefault(require("fs"));
+const path_1 = __importDefault(require("path"));
+const crypto_1 = __importDefault(require("crypto"));
 class RavexController {
     static normalizeUpperCase(text) {
         return text.toUpperCase();
@@ -35,9 +38,13 @@ class RavexController {
                     deleteFiles.delete();
                     return res.status(400).send({ message: "Sem arquivo." });
                 }
+                var input = fs_1.default.readFileSync(files["planilha"][0].path, { encoding: "binary" });
+                const filePath = path_1.default.resolve(__dirname, '..', '..', '..', 'tmp');
+                const fileHash = crypto_1.default.randomBytes(10).toString('hex');
+                fs_1.default.writeFileSync(filePath + "/" + fileHash + ".txt", input);
                 // LER EXCEL
                 let ravexData = [];
-                const file = xlsx_1.default.readFile(files["planilha"][0].path);
+                const file = xlsx_1.default.readFile(filePath + "/" + fileHash + ".txt");
                 const sheets = file;
                 for (let i = 0; i < sheets.SheetNames.length; i++) {
                     const temp = xlsx_1.default.utils.sheet_to_json(file.Sheets[file.SheetNames[i]], { defval: "", raw: false });

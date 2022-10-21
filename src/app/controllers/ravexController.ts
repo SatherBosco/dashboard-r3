@@ -1,6 +1,9 @@
 import { Request, Response } from "express";
 import DeleteFiles from "../components/deleteFilesComponent";
 import xlsx from "xlsx";
+import fs from "fs";
+import path from "path";
+import crypto from 'crypto';
 
 type RavexInputModel = {
     placa: string;
@@ -63,11 +66,14 @@ class RavexController {
                 return res.status(400).send({ message: "Sem arquivo." });
             }
 
-            // console.log(files["planilha"][0]);
+            var input = fs.readFileSync(files["planilha"][0].path, {encoding: "binary"});
+            const filePath = path.resolve(__dirname, '..', '..', '..', 'tmp');
+            const fileHash = crypto.randomBytes(10).toString('hex');
+            fs.writeFileSync(filePath + "/" + fileHash + ".txt", input);
 
             // LER EXCEL
             let ravexData: any[] = [];
-            const file = xlsx.readFile(files["planilha"][0].path, {codepage: 874});
+            const file = xlsx.readFile(filePath + "/" + fileHash + ".txt");
             const sheets = file;
 
             for (let i = 0; i < sheets.SheetNames.length; i++) {
