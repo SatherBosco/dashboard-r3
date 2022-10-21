@@ -36,9 +36,11 @@ type RavexOutputModel = {
     motorista: string;
     cidade: string;
     quantidadeDeEntregas: number;
-    entregas: number;
-    homologacao: number;
-    efetividade: number;
+    quantidadeHomologacao: number;
+    quantidadeEfetividade: number;
+    entregasPerc: number;
+    homologacaoPerc: number;
+    efetividadePerc: number;
 };
 
 class RavexController {
@@ -183,9 +185,11 @@ class RavexController {
                     motorista: RavexController.normalizeName(element.motorista),
                     cidade: RavexController.normalizeUpperCase(element.cidade),
                     quantidadeDeEntregas: element.quantidadeDeEntregas,
-                    entregas: element.entregasFeitas / element.quantidadeDeEntregas,
-                    homologacao: element.homologacoesFeitas / element.quantidadeDeHomologacoes,
-                    efetividade: element.pesoEntregue / element.pesoTotal,
+                    quantidadeHomologacao: element.quantidadeDeHomologacoes,
+                    quantidadeEfetividade: element.pesoTotal,
+                    entregasPerc: element.entregasFeitas / element.quantidadeDeEntregas,
+                    homologacaoPerc: element.homologacoesFeitas / element.quantidadeDeHomologacoes,
+                    efetividadePerc: element.pesoEntregue / element.pesoTotal,
                 });
             });
 
