@@ -3,7 +3,8 @@ import DeleteFiles from "../components/deleteFilesComponent";
 import xlsx from "xlsx";
 import fs from "fs";
 import path from "path";
-import crypto from 'crypto';
+import crypto from "crypto";
+import { transformDate } from "./financeiroController";
 
 type RavexInputModel = {
     placa: string;
@@ -43,6 +44,20 @@ type RavexOutputModel = {
     efetividadePerc: number;
 };
 
+type RavexLateOutputModel = {
+    date: Date;
+    days: number;
+    cidade: string;
+    placa: string;
+    motorista: string;
+    clienteName: string;
+    clienteCNPJ: string;
+    notaFiscal: string;
+    peso: number;
+    status: string;
+    anomalia: string;
+};
+
 class RavexController {
     private static normalizeUpperCase(text: string) {
         return text.toUpperCase();
@@ -57,6 +72,14 @@ class RavexController {
         return name;
     }
 
+    private static statusIdentify(status: string): boolean {
+        status = status.toLowerCase();
+        if (status.includes("reentrega") || status.includes("a entregar")) {
+            return false;
+        }
+        return true;
+    }
+
     public async manipulateData(req: Request, res: Response) {
         try {
             const files = req.files as { [fieldname: string]: Express.Multer.File[] };
@@ -68,9 +91,9 @@ class RavexController {
                 return res.status(400).send({ message: "Sem arquivo." });
             }
 
-            var input = fs.readFileSync(files["planilha"][0].path, {encoding: "binary"});
-            const filePath = path.resolve(__dirname, '..', '..', '..', 'tmp');
-            const fileHash = crypto.randomBytes(10).toString('hex');
+            var input = fs.readFileSync(files["planilha"][0].path, { encoding: "binary" });
+            const filePath = path.resolve(__dirname, "..", "..", "..", "tmp");
+            const fileHash = crypto.randomBytes(10).toString("hex");
             fs.writeFileSync(filePath + "/" + fileHash + ".txt", input);
 
             // LER EXCEL
@@ -88,6 +111,12 @@ class RavexController {
             deleteFiles.delete();
 
             var dataInput: RavexInputModel[] = [];
+            var lateData: RavexLateOutputModel[] = [];
+
+            var minDateTime = 4099766400000;
+            var maxDateTime = 0;
+
+            var nowDate = new Date().getTime();
 
             for (let i = 0; i < ravexData.length; i++) {
                 if (ravexData[i]["Transportadora"] === "Maggi Motos") {
@@ -95,16 +124,40 @@ class RavexController {
                         placa: ravexData[i]["Placa"],
                         motorista: ravexData[i]["Motorista"] === "" ? "Sem nome" : ravexData[i]["Motorista"],
                         cidade: ravexData[i]["Cidade"],
-                        codigoDoCliente: ravexData[i]["Código do cliente"],//C�digo do cliente
+                        codigoDoCliente: ravexData[i]["Código do cliente"],
                         cliente: ravexData[i]["Cliente"],
-                        pesoBruto: parseFloat(ravexData[i]["Peso bruto (NF)"].toString().replace(",", ".")),
+                        pesoBruto: parseFloat(ravexData[i]["Peso bruto (NF)"]) / 1000,
                         notasPrevistas: parseInt(ravexData[i]["Notas previstas"]),
                         notaFiscalHomologada: ravexData[i]["Nota fiscal homologada"] == "Sim" ? true : false,
                         quantidadeDeEntregas: parseInt(ravexData[i]["Quantidade de entregas"]),
-                        statusNF: !ravexData[i]["Status NF"].includes("Reentrega"),
+                        statusNF: RavexController.statusIdentify(ravexData[i]["Status NF"]),
                     };
 
                     dataInput.push(model);
+
+                    var dateSplit = ravexData[i]["Data estimada de entrega"].split(" ");
+                    var dateAux = transformDate(dateSplit[0]).getTime();
+                    if (dateAux < minDateTime && dateAux > 946684800000) minDateTime = dateAux;
+                    if (dateAux > maxDateTime) maxDateTime = dateAux;
+
+                    if (ravexData[i]["Anomalia"] !== "") {
+                        var lateAux: RavexLateOutputModel = {
+                            date: new Date(dateAux),
+                            days: nowDate - dateAux > 0 ? Math.trunc((nowDate - dateAux) / 86400000) : 0,
+                            cidade: ravexData[i]["Cidade"],
+                            placa: ravexData[i]["Placa"],
+                            motorista: ravexData[i]["Motorista"],
+                            clienteName: ravexData[i]["Cliente"],
+                            clienteCNPJ: ravexData[i]["Código do cliente"],
+                            notaFiscal: ravexData[i]["Número NF"],
+                            peso: parseFloat(ravexData[i]["Peso bruto (NF)"]) / 1000,
+                            status: ravexData[i]["Status NF"],
+                            anomalia: ravexData[i]["Anomalia"],
+                        };
+
+                        var haveInLateData = lateData.filter((itemInFilter) => itemInFilter.notaFiscal === lateAux.notaFiscal);
+                        if (haveInLateData.length === 0 && lateAux.days > 0) lateData.push(lateAux);
+                    }
                 }
             }
 
@@ -220,7 +273,7 @@ class RavexController {
             // });
             // -------------------------------------------WRITE EXCEL-------------------------------------------
 
-            return res.send({ message: "Dados lidos com sucesso.", data });
+            return res.send({ message: "Dados lidos com sucesso.", data, lateData, minDate: new Date(minDateTime), maxDate: new Date(maxDateTime) });
         } catch {
             return res.status(400).send({ message: "Falha na geração da planilha de desempenho." });
         }

@@ -17,6 +17,7 @@ const xlsx_1 = __importDefault(require("xlsx"));
 const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path"));
 const crypto_1 = __importDefault(require("crypto"));
+const financeiroController_1 = require("./financeiroController");
 class RavexController {
     static normalizeUpperCase(text) {
         return text.toUpperCase();
@@ -29,6 +30,13 @@ class RavexController {
         name = name.replace(/(^\w{1})|(\s+\w{1})/g, (letter) => letter.toUpperCase());
         return name;
     }
+    static statusIdentify(status) {
+        status = status.toLowerCase();
+        if (status.includes("reentrega") || status.includes("a entregar")) {
+            return false;
+        }
+        return true;
+    }
     manipulateData(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
@@ -39,8 +47,8 @@ class RavexController {
                     return res.status(400).send({ message: "Sem arquivo." });
                 }
                 var input = fs_1.default.readFileSync(files["planilha"][0].path, { encoding: "binary" });
-                const filePath = path_1.default.resolve(__dirname, '..', '..', '..', 'tmp');
-                const fileHash = crypto_1.default.randomBytes(10).toString('hex');
+                const filePath = path_1.default.resolve(__dirname, "..", "..", "..", "tmp");
+                const fileHash = crypto_1.default.randomBytes(10).toString("hex");
                 fs_1.default.writeFileSync(filePath + "/" + fileHash + ".txt", input);
                 // LER EXCEL
                 let ravexData = [];
@@ -54,6 +62,10 @@ class RavexController {
                 }
                 deleteFiles.delete();
                 var dataInput = [];
+                var lateData = [];
+                var minDateTime = 4099766400000;
+                var maxDateTime = 0;
+                var nowDate = new Date().getTime();
                 for (let i = 0; i < ravexData.length; i++) {
                     if (ravexData[i]["Transportadora"] === "Maggi Motos") {
                         var model = {
@@ -62,13 +74,37 @@ class RavexController {
                             cidade: ravexData[i]["Cidade"],
                             codigoDoCliente: ravexData[i]["Código do cliente"],
                             cliente: ravexData[i]["Cliente"],
-                            pesoBruto: parseFloat(ravexData[i]["Peso bruto (NF)"].toString().replace(",", ".")),
+                            pesoBruto: parseFloat(ravexData[i]["Peso bruto (NF)"]) / 1000,
                             notasPrevistas: parseInt(ravexData[i]["Notas previstas"]),
                             notaFiscalHomologada: ravexData[i]["Nota fiscal homologada"] == "Sim" ? true : false,
                             quantidadeDeEntregas: parseInt(ravexData[i]["Quantidade de entregas"]),
-                            statusNF: !ravexData[i]["Status NF"].includes("Reentrega"),
+                            statusNF: RavexController.statusIdentify(ravexData[i]["Status NF"]),
                         };
                         dataInput.push(model);
+                        var dateSplit = ravexData[i]["Data estimada de entrega"].split(" ");
+                        var dateAux = (0, financeiroController_1.transformDate)(dateSplit[0]).getTime();
+                        if (dateAux < minDateTime && dateAux > 946684800000)
+                            minDateTime = dateAux;
+                        if (dateAux > maxDateTime)
+                            maxDateTime = dateAux;
+                        if (ravexData[i]["Anomalia"] !== "") {
+                            var lateAux = {
+                                date: new Date(dateAux),
+                                days: nowDate - dateAux > 0 ? Math.trunc((nowDate - dateAux) / 86400000) : 0,
+                                cidade: ravexData[i]["Cidade"],
+                                placa: ravexData[i]["Placa"],
+                                motorista: ravexData[i]["Motorista"],
+                                clienteName: ravexData[i]["Cliente"],
+                                clienteCNPJ: ravexData[i]["Código do cliente"],
+                                notaFiscal: ravexData[i]["Número NF"],
+                                peso: parseFloat(ravexData[i]["Peso bruto (NF)"]) / 1000,
+                                status: ravexData[i]["Status NF"],
+                                anomalia: ravexData[i]["Anomalia"],
+                            };
+                            var haveInLateData = lateData.filter((itemInFilter) => itemInFilter.notaFiscal === lateAux.notaFiscal);
+                            if (haveInLateData.length === 0 && lateAux.days > 0)
+                                lateData.push(lateAux);
+                        }
                     }
                 }
                 var dataProps = [];
@@ -170,7 +206,7 @@ class RavexController {
                 //     }
                 // });
                 // -------------------------------------------WRITE EXCEL-------------------------------------------
-                return res.send({ message: "Dados lidos com sucesso.", data });
+                return res.send({ message: "Dados lidos com sucesso.", data, lateData, minDate: new Date(minDateTime), maxDate: new Date(maxDateTime) });
             }
             catch (_a) {
                 return res.status(400).send({ message: "Falha na geração da planilha de desempenho." });

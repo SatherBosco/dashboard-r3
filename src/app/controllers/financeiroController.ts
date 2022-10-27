@@ -6,7 +6,7 @@ import Financeiro, { FinanceiroInput, FinanceiroStatus } from "../models/Finance
 import xlsx from "xlsx";
 import { getJsDateFromExcel } from "excel-date-to-js";
 
-function transformDate(date: string | number) {
+export function transformDate(date: string | number) {
     if (typeof date === "string" && date.includes("/")) {
         var dateSplit = date.split("/");
         var year = parseInt(dateSplit[2]);
@@ -61,13 +61,15 @@ class FinanceiroController {
                     var dataDeAutorizacao = transformDate(data[i]["Data de Autorizacao"]);
                     var cnpjPagador = data[i]["CNPJ Pagador"];
                     var clientePagador = data[i]["Cliente Pagador"];
-                    var valorDoFrete = parseFloat((data[i]["Valor do Frete"].toString()).replace(",", "."));
+                    var valorDoFrete = parseFloat(data[i]["Valor do Frete"].toString().replace(",", "."));
                     var numeroDaFatura = data[i]["Numero da Fatura"];
-                    var dataDeInclusaoDaFatura = data[i]["Data de Inclusao da Fatura"] === "" || data[i]["Data de Inclusao da Fatura"] === undefined ? "" : transformDate(data[i]["Data de Inclusao da Fatura"]);
+                    var dataDeInclusaoDaFatura =
+                        data[i]["Data de Inclusao da Fatura"] === "" || data[i]["Data de Inclusao da Fatura"] === undefined ? "" : transformDate(data[i]["Data de Inclusao da Fatura"]);
                     var dataDoVencimento = data[i]["Data do Vencimento"] === "" || data[i]["Data do Vencimento"] === undefined ? "" : transformDate(data[i]["Data do Vencimento"]);
                     var unidadeDeCobranca = data[i]["Unidade de Cobranca"];
                     var tipoDeBaixaFatura = data[i]["Tipo de Baixa Fatura"];
-                    var dataDaLiquidacaoFatura = data[i]["Data da Liquidacao Fatura"] === "" || data[i]["Data da Liquidacao Fatura"] === undefined ? "" : transformDate(data[i]["Data da Liquidacao Fatura"]);
+                    var dataDaLiquidacaoFatura =
+                        data[i]["Data da Liquidacao Fatura"] === "" || data[i]["Data da Liquidacao Fatura"] === undefined ? "" : transformDate(data[i]["Data da Liquidacao Fatura"]);
                     var status = numeroDaFatura === "" ? FinanceiroStatus.PendenteDeFaturamento : dataDaLiquidacaoFatura === "" ? FinanceiroStatus.Faturado : FinanceiroStatus.Liquidado;
                     var updatedAt = new Date();
 

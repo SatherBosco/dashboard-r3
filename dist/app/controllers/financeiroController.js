@@ -35,6 +35,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.transformDate = void 0;
 const deleteFilesComponent_1 = __importDefault(require("../components/deleteFilesComponent"));
 const Financeiro_1 = __importStar(require("../models/Financeiro"));
 const xlsx_1 = __importDefault(require("xlsx"));
@@ -50,6 +51,7 @@ function transformDate(date) {
     }
     return (0, excel_date_to_js_1.getJsDateFromExcel)(date);
 }
+exports.transformDate = transformDate;
 class FinanceiroController {
     getAll(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -88,7 +90,7 @@ class FinanceiroController {
                         var dataDeAutorizacao = transformDate(data[i]["Data de Autorizacao"]);
                         var cnpjPagador = data[i]["CNPJ Pagador"];
                         var clientePagador = data[i]["Cliente Pagador"];
-                        var valorDoFrete = parseFloat((data[i]["Valor do Frete"].toString()).replace(",", "."));
+                        var valorDoFrete = parseFloat(data[i]["Valor do Frete"].toString().replace(",", "."));
                         var numeroDaFatura = data[i]["Numero da Fatura"];
                         var dataDeInclusaoDaFatura = data[i]["Data de Inclusao da Fatura"] === "" || data[i]["Data de Inclusao da Fatura"] === undefined ? "" : transformDate(data[i]["Data de Inclusao da Fatura"]);
                         var dataDoVencimento = data[i]["Data do Vencimento"] === "" || data[i]["Data do Vencimento"] === undefined ? "" : transformDate(data[i]["Data do Vencimento"]);
