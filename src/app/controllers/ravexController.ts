@@ -155,8 +155,9 @@ class RavexController {
                             anomalia: ravexData[i]["Anomalia"],
                         };
 
-                        var haveInLateData = lateData.filter((itemInFilter) => itemInFilter.notaFiscal === lateAux.notaFiscal);
-                        if (haveInLateData.length === 0 && lateAux.days > 0) lateData.push(lateAux);
+                        if (lateAux.days > 0) {
+                            lateData.push(lateAux);
+                        }
                     }
                 }
             }

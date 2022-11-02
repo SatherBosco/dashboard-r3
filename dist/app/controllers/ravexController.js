@@ -101,9 +101,9 @@ class RavexController {
                                 status: ravexData[i]["Status NF"],
                                 anomalia: ravexData[i]["Anomalia"],
                             };
-                            var haveInLateData = lateData.filter((itemInFilter) => itemInFilter.notaFiscal === lateAux.notaFiscal);
-                            if (haveInLateData.length === 0 && lateAux.days > 0)
+                            if (lateAux.days > 0) {
                                 lateData.push(lateAux);
+                            }
                         }
                     }
                 }

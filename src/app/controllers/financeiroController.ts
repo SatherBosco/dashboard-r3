@@ -5,6 +5,8 @@ import Financeiro, { FinanceiroInput, FinanceiroStatus } from "../models/Finance
 
 import xlsx from "xlsx";
 import { getJsDateFromExcel } from "excel-date-to-js";
+import { parse, endOfMonth, startOfMonth, subMonths } from "date-fns";
+import { zonedTimeToUtc } from "date-fns-tz";
 
 export function transformDate(date: string | number) {
     if (typeof date === "string" && date.includes("/")) {
@@ -22,9 +24,26 @@ export function transformDate(date: string | number) {
 class FinanceiroController {
     public async getAll(req: Request, res: Response) {
         try {
-            var financeiroData = await Financeiro.find();
+            const nowDate = Date.now();
+            const loc = "UTC";
 
-            return res.send({ message: "Base Financeiro recuperada do banco de dados.", financeiroData });
+            const startMonth = zonedTimeToUtc(startOfMonth(nowDate), loc);
+            const endMonth = zonedTimeToUtc(endOfMonth(nowDate), loc);
+            const startLastMonth = zonedTimeToUtc(startOfMonth(subMonths(nowDate, 1)), loc);
+            const endLastMonth = zonedTimeToUtc(endOfMonth(subMonths(nowDate, 1)), loc);
+            const startLastLastMonth = zonedTimeToUtc(startOfMonth(subMonths(nowDate, 2)), loc);
+            const endLastLastMonth = zonedTimeToUtc(endOfMonth(subMonths(nowDate, 2)), loc);
+            const endOthersMonth = zonedTimeToUtc(endOfMonth(subMonths(nowDate, 3)), loc);
+
+            const monthData = await Financeiro.find({ dataDeAutorizacao: { $gte: startMonth, $lte: endMonth } });
+            const lastMonthData = await Financeiro.find({ dataDeAutorizacao: { $gte: startLastMonth, $lte: endLastMonth } });
+            const lastLastMonthData = await Financeiro.find({ dataDeAutorizacao: { $gte: startLastLastMonth, $lte: endLastLastMonth } });
+            const othersMonthData = await Financeiro.find({ dataDeAutorizacao: { $lte: endOthersMonth }, status: { $lte: 1 } });
+
+            const updatedDB = await Financeiro.findOne().sort({ updatedAt: -1 }).limit(1);
+            const lastUpdateDate = updatedDB?.updatedAt;
+
+            return res.send({ message: "Base Financeiro recuperada do banco de dados.", monthData, lastMonthData, lastLastMonthData, othersMonthData, lastUpdateDate });
         } catch {
             return res.status(400).send({ message: "Falha na solicitação da Base Financeiro." });
         }
@@ -80,6 +99,7 @@ class FinanceiroController {
                         inDB.cnpjPagador = cnpjPagador;
                         inDB.clientePagador = clientePagador;
                         inDB.valorDoFrete = valorDoFrete;
+                        // inDB.numeroDaFatura = inDB.numeroDaFatura ? inDB.numeroDaFatura : numeroDaFatura;
                         inDB.numeroDaFatura = numeroDaFatura;
                         if (dataDeInclusaoDaFatura instanceof Date) inDB.dataDeInclusaoDaFatura = dataDeInclusaoDaFatura;
                         if (dataDoVencimento instanceof Date) inDB.dataDoVencimento = dataDoVencimento;
