@@ -10,7 +10,7 @@ export class App {
     constructor() {
         this.server = express();
         this.middlewares();
-        Database();
+        // Database();
         this.routes();
     }
 

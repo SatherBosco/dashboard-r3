@@ -22,6 +22,9 @@ routes.post("/auth/authenticate", new authManagerController_1.default().authenti
 // routes.post("/auth/register", AuthController.register);
 // routes.post("/auth/change-password", AuthController.changePassword);
 routes.get("/financeiro/", financeiroController_1.default.getAll);
-routes.post("/financeiro/", upload.fields([{ name: 'planilha', maxCount: 1 }]), financeiroController_1.default.updateData);
-routes.post("/ravex/", upload.fields([{ name: 'planilha', maxCount: 1 }]), ravexController_1.default.manipulateData);
+routes.post("/financeiro/", upload.fields([{ name: "planilha", maxCount: 1 }]), financeiroController_1.default.updateData);
+routes.post("/ravex/", upload.fields([
+    { name: "ravex", maxCount: 1 },
+    { name: "devolucoes", maxCount: 1 },
+]), ravexController_1.default.manipulateData);
 exports.default = routes;

@@ -5,6 +5,7 @@ import fs from "fs";
 import path from "path";
 import crypto from "crypto";
 import { transformDate } from "./financeiroController";
+import { getJsDateFromExcel } from "excel-date-to-js";
 
 type RavexInputModel = {
     placa: string;
@@ -58,7 +59,43 @@ type RavexLateOutputModel = {
     anomalia: string;
 };
 
+type DevolucoesInputModel = {
+    date: Date;
+    placaCarro: string;
+    placaCarreta: string;
+    nf: string;
+    nfParcial: string;
+};
+
+type DevolucoesOutputModel = {
+    date: Date;
+    placaCarro: string;
+    placaCarreta: string;
+    nf: string;
+    nfParcial: string;
+    cliente: string;
+};
+
+type DevolucoesErrosOutputModel = {
+    date: Date;
+    placaCarro: string;
+    placaCarreta: string;
+    nf: string;
+    nfParcial: string;
+    cliente: string;
+    ravexPlan: string;
+};
+
 class RavexController {
+    private static transformDateInverse(date: string) {
+        var dateSplit = date.split("/");
+        var year = parseInt(dateSplit[2]);
+        year = year > 2000 ? year : year + 2000;
+        var month = parseInt(dateSplit[0]) - 1;
+        var day = parseInt(dateSplit[1]);
+        return new Date(year, month, day);
+    }
+
     private static normalizeUpperCase(text: string) {
         return text.toUpperCase();
     }
@@ -86,27 +123,44 @@ class RavexController {
 
             const deleteFiles = new DeleteFiles();
 
-            if (!files || files === undefined || !files["planilha"]) {
+            if (!files || files === undefined || !files["ravex"] || !files["devolucoes"]) {
                 deleteFiles.delete();
                 return res.status(400).send({ message: "Sem arquivo." });
             }
 
-            var input = fs.readFileSync(files["planilha"][0].path, { encoding: "binary" });
+            var input = fs.readFileSync(files["ravex"][0].path, { encoding: "binary" });
             const filePath = path.resolve(__dirname, "..", "..", "..", "tmp");
             const fileHash = crypto.randomBytes(10).toString("hex");
             fs.writeFileSync(filePath + "/" + fileHash + ".txt", input);
 
-            // LER EXCEL
+            // LER EXCEL RAVEX
             let ravexData: any[] = [];
-            const file = xlsx.readFile(filePath + "/" + fileHash + ".txt");
-            const sheets = file;
+            const fileRavex = xlsx.readFile(filePath + "/" + fileHash + ".txt", { dense: true });
+            // const fileRavex = xlsx.readFile(files["ravex"][0].path);
 
-            for (let i = 0; i < sheets.SheetNames.length; i++) {
-                const temp = xlsx.utils.sheet_to_json(file.Sheets[file.SheetNames[i]], { defval: "", raw: false });
-                temp.forEach((res) => {
-                    ravexData.push(res);
-                });
+            for (let i = 0; i < fileRavex.SheetNames.length; i++) {
+                for (let index = 0; index < 150; index++) {
+                    const temp = xlsx.utils.sheet_to_json(fileRavex.Sheets[fileRavex.SheetNames[i]], {
+                        defval: "",
+                        raw: false,
+                        range: { s: { c: 0, r: 1000 * index }, e: { c: 18, r: 1000 * (index + 1) - 1 } },
+                    });
+                    temp.forEach((res) => {
+                        ravexData.push(res);
+                    });
+                }
             }
+
+            // LER EXCEL DEVOLUCOES
+            let devolucoesData: any[] = [];
+            const fileDevolucoes = xlsx.readFile(files["devolucoes"][0].path, { dense: true });
+
+            // console.log(fileDevolucoes.Sheets["Plan Devolução"]["!ref"]);
+
+            const temp = xlsx.utils.sheet_to_json(fileDevolucoes.Sheets["Plan Devolução"], { range: 1, defval: "", raw: false });
+            temp.forEach((res) => {
+                devolucoesData.push(res);
+            });
 
             deleteFiles.delete();
 
@@ -247,6 +301,122 @@ class RavexController {
                 });
             });
 
+            // -------------------------------------------DEVOLUCOES--------------------------------------------
+
+            var devolucoesInputData: DevolucoesInputModel[] = [];
+
+            for (let i = 0; i < devolucoesData.length; i++) {
+                if (devolucoesData[i].nf === "") continue;
+
+                var devolucoesFiltered = devolucoesInputData.filter((itemInFilter) => itemInFilter.nf === devolucoesData[i].nf);
+
+                if (devolucoesFiltered.length === 0) {
+                    var dateAuxDev = RavexController.transformDateInverse(devolucoesData[i]["Data"]);
+                    var devModel: DevolucoesInputModel = {
+                        date: new Date(dateAuxDev),
+                        placaCarro: devolucoesData[i]["Placa Carro"],
+                        placaCarreta: devolucoesData[i]["Placa Carreta"],
+                        nf: devolucoesData[i]["NF Venda"],
+                        nfParcial: devolucoesData[i]["NF Parcial"],
+                    };
+
+                    devolucoesInputData.push(devModel);
+                }
+            }
+
+            var devolucoesOutputData: DevolucoesOutputModel[] = [];
+
+            for (let i = 0; i < devolucoesInputData.length; i++) {
+                if (devolucoesInputData[i].nf === "") continue;
+
+                let ravexFiltered = ravexData.filter(
+                    (itemInFilter) =>
+                        itemInFilter["Número NF"] === devolucoesInputData[i].nf && itemInFilter["Transportadora"] === "Maggi Motos" && itemInFilter["Status NF"].toLowerCase().includes("devolução")
+                );
+                let devFiltered = devolucoesOutputData.filter((itemInFilter) => itemInFilter.nf === devolucoesInputData[i].nf);
+
+                if (ravexFiltered.length > 0 && devFiltered.length === 0) {
+                    let modelDev: DevolucoesOutputModel = {
+                        date: devolucoesInputData[i].date,
+                        nf: devolucoesInputData[i].nf,
+                        nfParcial: devolucoesInputData[i].nfParcial,
+                        cliente: ravexFiltered[0]["Cliente"],
+                        placaCarro: devolucoesInputData[i].placaCarro,
+                        placaCarreta: devolucoesInputData[i].placaCarreta,
+                    };
+                    devolucoesOutputData.push(modelDev);
+                }
+            }
+
+            var devolucoesErrosOutputData: DevolucoesErrosOutputModel[] = [];
+
+            for (let i = 0; i < devolucoesInputData.length; i++) {
+                if (devolucoesInputData[i].nf === "") continue;
+
+                let devFiltered = devolucoesErrosOutputData.filter((itemInFilter) => itemInFilter.nf === devolucoesInputData[i].nf);
+
+                if (devFiltered.length === 0) {
+                    let devolFiltered = ravexData.filter((itemInFilter) => itemInFilter["Número NF"] === devolucoesInputData[i].nf && itemInFilter["Transportadora"] === "Maggi Motos");
+                    if (devolFiltered.length > 0) {
+                        let devolFilteredAux = devolFiltered.filter((itemInFilter) => itemInFilter["Status NF"].toLowerCase().includes("devolução"));
+                        if (devolFilteredAux.length === 0) {
+                            let modelDev: DevolucoesErrosOutputModel = {
+                                date: devolucoesInputData[i].date,
+                                nf: devolucoesInputData[i].nf,
+                                nfParcial: devolucoesInputData[i].nfParcial,
+                                cliente: devolFiltered[0]["Cliente"],
+                                placaCarro: devolucoesInputData[i].placaCarro,
+                                placaCarreta: devolucoesInputData[i].placaCarreta,
+                                ravexPlan: devolFiltered[0]["Status NF"],
+                            };
+                            devolucoesErrosOutputData.push(modelDev);
+                        }
+                    } else {
+                        let modelDev: DevolucoesErrosOutputModel = {
+                            date: devolucoesInputData[i].date,
+                            nf: devolucoesInputData[i].nf,
+                            nfParcial: devolucoesInputData[i].nfParcial,
+                            cliente: "",
+                            placaCarro: devolucoesInputData[i].placaCarro,
+                            placaCarreta: devolucoesInputData[i].placaCarreta,
+                            ravexPlan: "Não consta na planilha do Ravex",
+                        };
+                        devolucoesErrosOutputData.push(modelDev);
+                    }
+                }
+            }
+
+            for (let i = 0; i < ravexData.length; i++) {
+                if (ravexData[i]["Número NF"] === "") continue;
+
+                if (ravexData[i]["Transportadora"] === "Maggi Motos") {
+                    let devFiltered = devolucoesErrosOutputData.filter((itemInFilter) => itemInFilter.nf === ravexData[i]["Número NF"]);
+
+                    if (devFiltered.length === 0) {
+                        let devolFiltered = ravexData.filter(
+                            (itemInFilter) =>
+                                itemInFilter["Número NF"] === ravexData[i]["Número NF"] &&
+                                itemInFilter["Transportadora"] === "Maggi Motos" &&
+                                itemInFilter["Status NF"].toLowerCase().includes("devolução")
+                        );
+                        if (devolFiltered.length > 0) {
+                            var dateSplit = ravexData[i]["Data estimada de entrega"].split(" ");
+                            var dateAux = transformDate(dateSplit[0]).getTime();
+                            let modelDev: DevolucoesErrosOutputModel = {
+                                date: new Date(dateAux),
+                                nf: ravexData[i]["Número NF"],
+                                nfParcial: ravexData[i]["NF Parcial"],
+                                cliente: ravexData[i]["Cliente"],
+                                placaCarro: "",
+                                placaCarreta: "",
+                                ravexPlan: "Não consta na planilha de Devoluções",
+                            };
+                            devolucoesErrosOutputData.push(modelDev);
+                        }
+                    }
+                }
+            }
+
             // -------------------------------------------WRITE EXCEL-------------------------------------------
             // const dataAuxWrite = [
             //     { name: 'Diary', code: 'diary_code', author: 'Pagorn' },
@@ -274,7 +444,7 @@ class RavexController {
             // });
             // -------------------------------------------WRITE EXCEL-------------------------------------------
 
-            return res.send({ message: "Dados lidos com sucesso.", data, lateData, minDate: new Date(minDateTime), maxDate: new Date(maxDateTime) });
+            return res.send({ message: "Dados lidos com sucesso.", data, lateData, minDate: new Date(minDateTime), maxDate: new Date(maxDateTime), devolucoesOutputData, devolucoesErrosOutputData });
         } catch {
             return res.status(400).send({ message: "Falha na geração da planilha de desempenho." });
         }

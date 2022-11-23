@@ -7,12 +7,11 @@ exports.App = void 0;
 const express_1 = __importDefault(require("express"));
 const cors_1 = __importDefault(require("cors"));
 const routes_1 = __importDefault(require("./routes"));
-const database_1 = __importDefault(require("../database"));
 class App {
     constructor() {
         this.server = (0, express_1.default)();
         this.middlewares();
-        (0, database_1.default)();
+        // Database();
         this.routes();
     }
     middlewares() {
