@@ -63,10 +63,21 @@ class RavexController {
                 const fileRavex = xlsx_1.default.readFile(filePath + "/" + fileHash + ".txt", { dense: true });
                 // const fileRavex = xlsx.readFile(files["ravex"][0].path);
                 for (let i = 0; i < fileRavex.SheetNames.length; i++) {
-                    for (let index = 0; index < 150; index++) {
-                        const temp = xlsx_1.default.utils.sheet_to_json(fileRavex.Sheets[fileRavex.SheetNames[i]], {
+                    var header = xlsx_1.default.utils.sheet_to_json(fileRavex.Sheets[fileRavex.SheetNames[i]], {
+                        defval: "",
+                        raw: false,
+                        header: 1,
+                        range: { s: { c: 0, r: 0 }, e: { c: 18, r: 0 } },
+                    });
+                    var head = [];
+                    header[0].forEach((res) => {
+                        head.push(res);
+                    });
+                    for (let index = 0; index < 200; index++) {
+                        let temp = xlsx_1.default.utils.sheet_to_json(fileRavex.Sheets[fileRavex.SheetNames[i]], {
                             defval: "",
                             raw: false,
+                            header: head,
                             range: { s: { c: 0, r: 1000 * index }, e: { c: 18, r: 1000 * (index + 1) - 1 } },
                         });
                         temp.forEach((res) => {
