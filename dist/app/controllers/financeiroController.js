@@ -68,9 +68,9 @@ class FinanceiroController {
                 const endLastLastMonth = (0, date_fns_tz_1.zonedTimeToUtc)((0, date_fns_1.endOfMonth)((0, date_fns_1.subMonths)(nowDate, 2)), loc);
                 const endOthersMonth = (0, date_fns_tz_1.zonedTimeToUtc)((0, date_fns_1.endOfMonth)((0, date_fns_1.subMonths)(nowDate, 3)), loc);
                 const monthData = yield Financeiro_1.default.find({ dataDeAutorizacao: { $gte: startMonth, $lte: endMonth }, tipoDeBaixaFatura: { $ne: "CANCELADO" } });
-                const lastMonthData = yield Financeiro_1.default.find({ dataDeAutorizacao: { $gte: startLastMonth, $lte: endLastMonth } });
-                const lastLastMonthData = yield Financeiro_1.default.find({ dataDeAutorizacao: { $gte: startLastLastMonth, $lte: endLastLastMonth } });
-                const othersMonthData = yield Financeiro_1.default.find({ dataDeAutorizacao: { $lte: endOthersMonth }, status: { $lte: 1 } });
+                const lastMonthData = yield Financeiro_1.default.find({ dataDeAutorizacao: { $gte: startLastMonth, $lte: endLastMonth }, tipoDeBaixaFatura: { $ne: "CANCELADO" } });
+                const lastLastMonthData = yield Financeiro_1.default.find({ dataDeAutorizacao: { $gte: startLastLastMonth, $lte: endLastLastMonth }, tipoDeBaixaFatura: { $ne: "CANCELADO" } });
+                const othersMonthData = yield Financeiro_1.default.find({ dataDeAutorizacao: { $lte: endOthersMonth }, status: { $lte: 1 }, tipoDeBaixaFatura: { $ne: "CANCELADO" } });
                 const updatedDB = yield Financeiro_1.default.findOne().sort({ updatedAt: -1 }).limit(1);
                 const lastUpdateDate = updatedDB === null || updatedDB === void 0 ? void 0 : updatedDB.updatedAt;
                 return res.send({ message: "Base Financeiro recuperada do banco de dados.", monthData, lastMonthData, lastLastMonthData, othersMonthData, lastUpdateDate });

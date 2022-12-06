@@ -1,6 +1,5 @@
 import { NextFunction, Request, Response } from "express";
 import { verify } from "jsonwebtoken";
-import authConfig from "../../configs/auth.json";
 
 interface DecodedPayload {
     cpf: string;
@@ -23,7 +22,7 @@ export default function authVerify(req: Request, res: Response, next: NextFuncti
     if (!/^Bearer$/i.test(scheme)) return res.status(401).send({ message: "Erro: Token malformado." });
 
     try {
-        const decoded = verify(token, authConfig["manager-access"]);
+        const decoded = verify(token, "123");
 
         const { cpf, role } = decoded as DecodedPayload;
 

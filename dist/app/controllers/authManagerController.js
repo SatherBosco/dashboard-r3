@@ -13,11 +13,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const jsonwebtoken_1 = require("jsonwebtoken");
-const auth_json_1 = __importDefault(require("../../configs/auth.json"));
 const Manager_1 = __importDefault(require("../models/Manager"));
 class AuthManagerController {
     generateAccessToken(params = {}) {
-        return (0, jsonwebtoken_1.sign)(params, auth_json_1.default["manager-access"], {
+        return (0, jsonwebtoken_1.sign)(params, "123", {
             expiresIn: 86400,
         });
     }

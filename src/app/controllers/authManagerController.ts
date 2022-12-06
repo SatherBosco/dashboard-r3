@@ -1,12 +1,11 @@
 import { Request, Response } from "express";
 import { sign } from "jsonwebtoken";
 
-import authConfig from "../../configs/auth.json";
 import Manager from "../models/Manager";
 
 export default class AuthManagerController {
     generateAccessToken(params = {}) {
-        return sign(params, authConfig["manager-access"], {
+        return sign(params, "123", {
             expiresIn: 86400,
         });
     }

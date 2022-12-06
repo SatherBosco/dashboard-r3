@@ -5,7 +5,7 @@ import Financeiro, { FinanceiroInput, FinanceiroStatus } from "../models/Finance
 
 import xlsx from "xlsx";
 import { getJsDateFromExcel } from "excel-date-to-js";
-import { parse, endOfMonth, startOfMonth, subMonths } from "date-fns";
+import { endOfMonth, startOfMonth, subMonths } from "date-fns";
 import { zonedTimeToUtc } from "date-fns-tz";
 
 export function transformDate(date: string | number) {
@@ -36,9 +36,9 @@ class FinanceiroController {
             const endOthersMonth = zonedTimeToUtc(endOfMonth(subMonths(nowDate, 3)), loc);
 
             const monthData = await Financeiro.find({ dataDeAutorizacao: { $gte: startMonth, $lte: endMonth }, tipoDeBaixaFatura: { $ne: "CANCELADO" } });
-            const lastMonthData = await Financeiro.find({ dataDeAutorizacao: { $gte: startLastMonth, $lte: endLastMonth } });
-            const lastLastMonthData = await Financeiro.find({ dataDeAutorizacao: { $gte: startLastLastMonth, $lte: endLastLastMonth } });
-            const othersMonthData = await Financeiro.find({ dataDeAutorizacao: { $lte: endOthersMonth }, status: { $lte: 1 } });
+            const lastMonthData = await Financeiro.find({ dataDeAutorizacao: { $gte: startLastMonth, $lte: endLastMonth }, tipoDeBaixaFatura: { $ne: "CANCELADO" } });
+            const lastLastMonthData = await Financeiro.find({ dataDeAutorizacao: { $gte: startLastLastMonth, $lte: endLastLastMonth }, tipoDeBaixaFatura: { $ne: "CANCELADO" } });
+            const othersMonthData = await Financeiro.find({ dataDeAutorizacao: { $lte: endOthersMonth }, status: { $lte: 1 }, tipoDeBaixaFatura: { $ne: "CANCELADO" } });
 
             const updatedDB = await Financeiro.findOne().sort({ updatedAt: -1 }).limit(1);
             const lastUpdateDate = updatedDB?.updatedAt;

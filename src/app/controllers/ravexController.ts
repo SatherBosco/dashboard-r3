@@ -5,7 +5,6 @@ import fs from "fs";
 import path from "path";
 import crypto from "crypto";
 import { transformDate } from "./financeiroController";
-import { getJsDateFromExcel } from "excel-date-to-js";
 
 type RavexInputModel = {
     placa: string;
