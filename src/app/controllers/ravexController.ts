@@ -184,7 +184,7 @@ class RavexController {
             var nowDate = new Date().getTime();
 
             for (let i = 0; i < ravexData.length; i++) {
-                if (ravexData[i]["Transportadora"] === "Maggi Motos") {
+                if (ravexData[i]["Transportadora"] === "Maggi Motos" || ravexData[i]["Transportadora"] === "R3 Transportes") {
                     var model: RavexInputModel = {
                         placa: ravexData[i]["Placa"],
                         motorista: ravexData[i]["Motorista"] === "" ? "Sem nome" : ravexData[i]["Motorista"],
@@ -342,7 +342,7 @@ class RavexController {
 
                 let ravexFiltered = ravexData.filter(
                     (itemInFilter) =>
-                        itemInFilter["Número NF"] === devolucoesInputData[i].nf && itemInFilter["Transportadora"] === "Maggi Motos" && itemInFilter["Status NF"].toLowerCase().includes("devolução")
+                        itemInFilter["Número NF"] === devolucoesInputData[i].nf && (itemInFilter["Transportadora"] === "Maggi Motos" || ravexData[i]["Transportadora"] === "R3 Transportes") && itemInFilter["Status NF"].toLowerCase().includes("devolução")
                 );
                 let devFiltered = devolucoesOutputData.filter((itemInFilter) => itemInFilter.nf === devolucoesInputData[i].nf);
 
@@ -367,7 +367,7 @@ class RavexController {
                 let devFiltered = devolucoesErrosOutputData.filter((itemInFilter) => itemInFilter.nf === devolucoesInputData[i].nf);
 
                 if (devFiltered.length === 0) {
-                    let devolFiltered = ravexData.filter((itemInFilter) => itemInFilter["Número NF"] === devolucoesInputData[i].nf && itemInFilter["Transportadora"] === "Maggi Motos");
+                    let devolFiltered = ravexData.filter((itemInFilter) => itemInFilter["Número NF"] === devolucoesInputData[i].nf && (itemInFilter["Transportadora"] === "Maggi Motos" || ravexData[i]["Transportadora"] === "R3 Transportes"));
                     if (devolFiltered.length > 0) {
                         let devolFilteredAux = devolFiltered.filter((itemInFilter) => itemInFilter["Status NF"].toLowerCase().includes("devolução"));
                         if (devolFilteredAux.length === 0) {
@@ -400,14 +400,14 @@ class RavexController {
             for (let i = 0; i < ravexData.length; i++) {
                 if (ravexData[i]["Número NF"] === "") continue;
 
-                if (ravexData[i]["Transportadora"] === "Maggi Motos") {
+                if (ravexData[i]["Transportadora"] === "Maggi Motos" || ravexData[i]["Transportadora"] === "R3 Transportes") {
                     let devFiltered = devolucoesErrosOutputData.filter((itemInFilter) => itemInFilter.nf === ravexData[i]["Número NF"]);
 
                     if (devFiltered.length === 0) {
                         let devolFiltered = ravexData.filter(
                             (itemInFilter) =>
                                 itemInFilter["Número NF"] === ravexData[i]["Número NF"] &&
-                                itemInFilter["Transportadora"] === "Maggi Motos" &&
+                                (itemInFilter["Transportadora"] === "Maggi Motos" || ravexData[i]["Transportadora"] === "R3 Transportes") &&
                                 itemInFilter["Status NF"].toLowerCase().includes("devolução")
                         );
                         if (devolFiltered.length > 0) {

@@ -67,7 +67,7 @@ class FinanceiroController {
                 const startLastLastMonth = (0, date_fns_tz_1.zonedTimeToUtc)((0, date_fns_1.startOfMonth)((0, date_fns_1.subMonths)(nowDate, 2)), loc);
                 const endLastLastMonth = (0, date_fns_tz_1.zonedTimeToUtc)((0, date_fns_1.endOfMonth)((0, date_fns_1.subMonths)(nowDate, 2)), loc);
                 const endOthersMonth = (0, date_fns_tz_1.zonedTimeToUtc)((0, date_fns_1.endOfMonth)((0, date_fns_1.subMonths)(nowDate, 3)), loc);
-                const monthData = yield Financeiro_1.default.find({ dataDeAutorizacao: { $gte: startMonth, $lte: endMonth } });
+                const monthData = yield Financeiro_1.default.find({ dataDeAutorizacao: { $gte: startMonth, $lte: endMonth }, tipoDeBaixaFatura: { $ne: "CANCELADO" } });
                 const lastMonthData = yield Financeiro_1.default.find({ dataDeAutorizacao: { $gte: startLastMonth, $lte: endLastMonth } });
                 const lastLastMonthData = yield Financeiro_1.default.find({ dataDeAutorizacao: { $gte: startLastLastMonth, $lte: endLastLastMonth } });
                 const othersMonthData = yield Financeiro_1.default.find({ dataDeAutorizacao: { $lte: endOthersMonth }, status: { $lte: 1 } });
@@ -111,7 +111,7 @@ class FinanceiroController {
                         var dataDeInclusaoDaFatura = data[i]["Data de Inclusao da Fatura"] === "" || data[i]["Data de Inclusao da Fatura"] === undefined ? "" : transformDate(data[i]["Data de Inclusao da Fatura"]);
                         var dataDoVencimento = data[i]["Data do Vencimento"] === "" || data[i]["Data do Vencimento"] === undefined ? "" : transformDate(data[i]["Data do Vencimento"]);
                         var unidadeDeCobranca = data[i]["Unidade de Cobranca"];
-                        var tipoDeBaixaFatura = data[i]["Tipo de Baixa Fatura"];
+                        var tipoDeBaixaFatura = data[i]["Tipo de Baixa"];
                         var dataDaLiquidacaoFatura = data[i]["Data da Liquidacao Fatura"] === "" || data[i]["Data da Liquidacao Fatura"] === undefined ? "" : transformDate(data[i]["Data da Liquidacao Fatura"]);
                         var status = numeroDaFatura === "" ? Financeiro_1.FinanceiroStatus.PendenteDeFaturamento : dataDaLiquidacaoFatura === "" ? Financeiro_1.FinanceiroStatus.Faturado : Financeiro_1.FinanceiroStatus.Liquidado;
                         var updatedAt = new Date();

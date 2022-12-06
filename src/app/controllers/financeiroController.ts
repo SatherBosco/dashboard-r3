@@ -35,7 +35,7 @@ class FinanceiroController {
             const endLastLastMonth = zonedTimeToUtc(endOfMonth(subMonths(nowDate, 2)), loc);
             const endOthersMonth = zonedTimeToUtc(endOfMonth(subMonths(nowDate, 3)), loc);
 
-            const monthData = await Financeiro.find({ dataDeAutorizacao: { $gte: startMonth, $lte: endMonth } });
+            const monthData = await Financeiro.find({ dataDeAutorizacao: { $gte: startMonth, $lte: endMonth }, tipoDeBaixaFatura: { $ne: "CANCELADO" } });
             const lastMonthData = await Financeiro.find({ dataDeAutorizacao: { $gte: startLastMonth, $lte: endLastMonth } });
             const lastLastMonthData = await Financeiro.find({ dataDeAutorizacao: { $gte: startLastLastMonth, $lte: endLastLastMonth } });
             const othersMonthData = await Financeiro.find({ dataDeAutorizacao: { $lte: endOthersMonth }, status: { $lte: 1 } });
@@ -86,7 +86,7 @@ class FinanceiroController {
                         data[i]["Data de Inclusao da Fatura"] === "" || data[i]["Data de Inclusao da Fatura"] === undefined ? "" : transformDate(data[i]["Data de Inclusao da Fatura"]);
                     var dataDoVencimento = data[i]["Data do Vencimento"] === "" || data[i]["Data do Vencimento"] === undefined ? "" : transformDate(data[i]["Data do Vencimento"]);
                     var unidadeDeCobranca = data[i]["Unidade de Cobranca"];
-                    var tipoDeBaixaFatura = data[i]["Tipo de Baixa Fatura"];
+                    var tipoDeBaixaFatura = data[i]["Tipo de Baixa"];
                     var dataDaLiquidacaoFatura =
                         data[i]["Data da Liquidacao Fatura"] === "" || data[i]["Data da Liquidacao Fatura"] === undefined ? "" : transformDate(data[i]["Data da Liquidacao Fatura"]);
                     var status = numeroDaFatura === "" ? FinanceiroStatus.PendenteDeFaturamento : dataDaLiquidacaoFatura === "" ? FinanceiroStatus.Faturado : FinanceiroStatus.Liquidado;
