@@ -100,6 +100,8 @@ class FinanceiroController {
                     });
                 }
                 deleteFiles.delete();
+                var minDateTime = 4099766400000;
+                var maxDateTime = 0;
                 for (let i = 0; i < data.length; i++) {
                     if (data[i]["Serie/Numero CTRC"] !== "") {
                         var serieNumeroCTRC = data[i]["Serie/Numero CTRC"];
@@ -122,7 +124,6 @@ class FinanceiroController {
                             inDB.cnpjPagador = cnpjPagador;
                             inDB.clientePagador = clientePagador;
                             inDB.valorDoFrete = valorDoFrete;
-                            // inDB.numeroDaFatura = inDB.numeroDaFatura ? inDB.numeroDaFatura : numeroDaFatura;
                             inDB.numeroDaFatura = numeroDaFatura;
                             if (dataDeInclusaoDaFatura instanceof Date)
                                 inDB.dataDeInclusaoDaFatura = dataDeInclusaoDaFatura;
@@ -157,6 +158,19 @@ class FinanceiroController {
                                 financeiroObj.dataDaLiquidacaoFatura = dataDaLiquidacaoFatura;
                             yield Financeiro_1.default.create(financeiroObj);
                         }
+                        var dateAux = dataDeAutorizacao.getTime();
+                        if (dateAux < minDateTime && dateAux > 946684800000)
+                            minDateTime = dateAux;
+                        if (dateAux > maxDateTime)
+                            maxDateTime = dateAux;
+                    }
+                }
+                var dbData = yield Financeiro_1.default.find({ dataDeAutorizacao: { $gte: minDateTime, $lte: maxDateTime } });
+                for (let index = 0; index < dbData.length; index++) {
+                    var planilhaFiltered = data.filter((itemInFilter) => itemInFilter["Serie/Numero CTRC"] === dbData[index].serieNumeroCTRC);
+                    if (planilhaFiltered.length === 0) {
+                        dbData[index].tipoDeBaixaFatura = "CANCELADO";
+                        dbData[index].save();
                     }
                 }
                 // ATT BASE
