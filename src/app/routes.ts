@@ -7,6 +7,7 @@ import uploadConfig from "./middlewares/upload";
 import FinanceiroController from "./controllers/financeiroController";
 import RavexController from "./controllers/ravexController";
 import AuthManagerController from "./controllers/authManagerController";
+import DevolutionController from "./controllers/devolutionController";
 
 const routes = Router();
 
@@ -33,5 +34,10 @@ routes.post(
     ]),
     RavexController.manipulateData
 );
+
+// DEVOLUCOES -------------------------------------------------------------------------
+routes.get("/devolution/", DevolutionController.getAll);
+routes.post("/devolution/", upload.fields([{ name: "devolucoes", maxCount: 1 }]), DevolutionController.setDevolutions);
+routes.post("/devolution/:id", DevolutionController.update);
 
 export default routes;
