@@ -38,7 +38,7 @@ class FinanceiroController {
             const monthData = await Financeiro.find({ dataDeAutorizacao: { $gte: startMonth, $lte: endMonth }, tipoDeBaixaFatura: { $ne: "CANCELADO" } });
             const lastMonthData = await Financeiro.find({ dataDeAutorizacao: { $gte: startLastMonth, $lte: endLastMonth }, tipoDeBaixaFatura: { $ne: "CANCELADO" } });
             const lastLastMonthData = await Financeiro.find({ dataDeAutorizacao: { $gte: startLastLastMonth, $lte: endLastLastMonth }, tipoDeBaixaFatura: { $ne: "CANCELADO" } });
-            const othersMonthData = await Financeiro.find({ dataDeAutorizacao: { $lte: endOthersMonth }, status: { $lte: 1 }, tipoDeBaixaFatura: { $ne: "CANCELADO" } });
+            const othersMonthData = await Financeiro.find({ dataDeAutorizacao: { $lte: endOthersMonth }, tipoDeBaixaFatura: { $ne: "CANCELADO" } });
 
             const updatedDB = await Financeiro.findOne().sort({ updatedAt: -1 }).limit(1);
             const lastUpdateDate = updatedDB?.updatedAt;
@@ -142,7 +142,7 @@ class FinanceiroController {
 
             for (let index = 0; index < dbData.length; index++) {
                 var planilhaFiltered = data.filter((itemInFilter) => itemInFilter["Serie/Numero CTRC"] === dbData[index].serieNumeroCTRC);
-                
+
                 if (planilhaFiltered.length === 0) {
                     dbData[index].tipoDeBaixaFatura = "CANCELADO";
                     dbData[index].save();

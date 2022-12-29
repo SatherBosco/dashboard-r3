@@ -70,7 +70,7 @@ class FinanceiroController {
                 const monthData = yield Financeiro_1.default.find({ dataDeAutorizacao: { $gte: startMonth, $lte: endMonth }, tipoDeBaixaFatura: { $ne: "CANCELADO" } });
                 const lastMonthData = yield Financeiro_1.default.find({ dataDeAutorizacao: { $gte: startLastMonth, $lte: endLastMonth }, tipoDeBaixaFatura: { $ne: "CANCELADO" } });
                 const lastLastMonthData = yield Financeiro_1.default.find({ dataDeAutorizacao: { $gte: startLastLastMonth, $lte: endLastLastMonth }, tipoDeBaixaFatura: { $ne: "CANCELADO" } });
-                const othersMonthData = yield Financeiro_1.default.find({ dataDeAutorizacao: { $lte: endOthersMonth }, status: { $lte: 1 }, tipoDeBaixaFatura: { $ne: "CANCELADO" } });
+                const othersMonthData = yield Financeiro_1.default.find({ dataDeAutorizacao: { $lte: endOthersMonth }, tipoDeBaixaFatura: { $ne: "CANCELADO" } });
                 const updatedDB = yield Financeiro_1.default.findOne().sort({ updatedAt: -1 }).limit(1);
                 const lastUpdateDate = updatedDB === null || updatedDB === void 0 ? void 0 : updatedDB.updatedAt;
                 return res.send({ message: "Base Financeiro recuperada do banco de dados.", monthData, lastMonthData, lastLastMonthData, othersMonthData, lastUpdateDate });
