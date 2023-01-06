@@ -45,6 +45,24 @@ class RavexController {
         }
         return true;
     }
+    static cleanUpSpecialChars(string) {
+        return string
+            .replace(/[ÀÁÂÃÄÅ]/g, "A")
+            .replace(/[àáâãäå]/g, "a")
+            .replace(/[ÈÉÊ]/g, "E")
+            .replace(/[èéê]/g, "e")
+            .replace(/[ÌÍÎ]/g, "I")
+            .replace(/[ìíî]/g, "i")
+            .replace(/[ÒÓÔÕ]/g, "O")
+            .replace(/[òóôõ]/g, "o")
+            .replace(/[ÙÚÛ]/g, "U")
+            .replace(/[ùúû]/g, "u")
+            .replace(/[Ñ]/g, "N")
+            .replace(/[ñ]/g, "n")
+            .replace(/[Ç]/g, "C")
+            .replace(/[ç]/g, "c")
+            .toLowerCase();
+    }
     manipulateData(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
@@ -142,15 +160,24 @@ class RavexController {
                 }
                 var dataProps = [];
                 dataInput.forEach((element) => {
-                    var motoristaFilteredInProps = dataProps.filter((itemInFilter) => itemInFilter.motorista === element.motorista);
+                    var motoristaFilteredInProps = dataProps.filter((itemInFilter) => RavexController.cleanUpSpecialChars(itemInFilter.motorista) === RavexController.cleanUpSpecialChars(element.motorista));
                     if (motoristaFilteredInProps.length === 0) {
-                        var motoristaFilteredInInput = dataInput.filter((itemInFilter) => itemInFilter.motorista === element.motorista);
+                        var motoristaFilteredInInput = dataInput.filter((itemInFilter) => RavexController.cleanUpSpecialChars(itemInFilter.motorista) === RavexController.cleanUpSpecialChars(element.motorista));
                         var dataListAux = [];
+                        var placaAux = "";
+                        var placaCount = 0;
+                        motoristaFilteredInInput.forEach((entregas) => {
+                            var placaFiltered = motoristaFilteredInInput.filter((itemInFilter) => itemInFilter.placa === entregas.placa);
+                            if (placaFiltered.length > placaCount) {
+                                placaAux = entregas.placa;
+                                placaCount = placaFiltered.length;
+                            }
+                        });
                         motoristaFilteredInInput.forEach((entregas) => {
                             var clienteFiltered = dataListAux.filter((itemInFilter) => itemInFilter.codigoDoCliente === entregas.codigoDoCliente);
                             if (clienteFiltered.length === 0) {
                                 dataListAux.push({
-                                    placa: entregas.placa,
+                                    placa: placaAux,
                                     motorista: entregas.motorista,
                                     cidade: entregas.cidade,
                                     codigoDoCliente: entregas.codigoDoCliente,
@@ -237,7 +264,9 @@ class RavexController {
                 for (let i = 0; i < devolucoesInputData.length; i++) {
                     if (devolucoesInputData[i].nf === "")
                         continue;
-                    let ravexFiltered = ravexData.filter((itemInFilter) => itemInFilter["Número NF"] === devolucoesInputData[i].nf && (itemInFilter["Transportadora"] === "Maggi Motos" || ravexData[i]["Transportadora"] === "R3 Transportes") && itemInFilter["Status NF"].toLowerCase().includes("devolução"));
+                    let ravexFiltered = ravexData.filter((itemInFilter) => itemInFilter["Número NF"] === devolucoesInputData[i].nf &&
+                        (itemInFilter["Transportadora"] === "Maggi Motos" || ravexData[i]["Transportadora"] === "R3 Transportes") &&
+                        itemInFilter["Status NF"].toLowerCase().includes("devolução"));
                     let devFiltered = devolucoesOutputData.filter((itemInFilter) => itemInFilter.nf === devolucoesInputData[i].nf);
                     if (ravexFiltered.length > 0 && devFiltered.length === 0) {
                         let modelDev = {

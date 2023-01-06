@@ -116,6 +116,25 @@ class RavexController {
         return true;
     }
 
+    private static cleanUpSpecialChars(string: string): string {
+        return string
+            .replace(/[ÀÁÂÃÄÅ]/g, "A")
+            .replace(/[àáâãäå]/g, "a")
+            .replace(/[ÈÉÊ]/g, "E")
+            .replace(/[èéê]/g, "e")
+            .replace(/[ÌÍÎ]/g, "I")
+            .replace(/[ìíî]/g, "i")
+            .replace(/[ÒÓÔÕ]/g, "O")
+            .replace(/[òóôõ]/g, "o")
+            .replace(/[ÙÚÛ]/g, "U")
+            .replace(/[ùúû]/g, "u")
+            .replace(/[Ñ]/g, "N")
+            .replace(/[ñ]/g, "n")
+            .replace(/[Ç]/g, "C")
+            .replace(/[ç]/g, "c")
+            .toLowerCase();
+    }
+
     public async manipulateData(req: Request, res: Response) {
         try {
             const files = req.files as { [fieldname: string]: Express.Multer.File[] };
@@ -160,7 +179,6 @@ class RavexController {
                     });
                 }
             }
-
             // LER EXCEL DEVOLUCOES
             let devolucoesData: any[] = [];
             const fileDevolucoes = xlsx.readFile(files["devolucoes"][0].path, { dense: true });
@@ -171,7 +189,6 @@ class RavexController {
             temp.forEach((res) => {
                 devolucoesData.push(res);
             });
-
             deleteFiles.delete();
 
             var dataInput: RavexInputModel[] = [];
@@ -229,19 +246,34 @@ class RavexController {
             var dataProps: RavexPropsModel[] = [];
 
             dataInput.forEach((element) => {
-                var motoristaFilteredInProps = dataProps.filter((itemInFilter) => itemInFilter.motorista === element.motorista);
+                var motoristaFilteredInProps = dataProps.filter(
+                    (itemInFilter) => RavexController.cleanUpSpecialChars(itemInFilter.motorista) === RavexController.cleanUpSpecialChars(element.motorista)
+                );
 
                 if (motoristaFilteredInProps.length === 0) {
-                    var motoristaFilteredInInput = dataInput.filter((itemInFilter) => itemInFilter.motorista === element.motorista);
+                    var motoristaFilteredInInput = dataInput.filter(
+                        (itemInFilter) => RavexController.cleanUpSpecialChars(itemInFilter.motorista) === RavexController.cleanUpSpecialChars(element.motorista)
+                    );
 
                     var dataListAux: RavexPropsModel[] = [];
+
+                    var placaAux = "";
+                    var placaCount = 0;
+                    motoristaFilteredInInput.forEach((entregas) => {
+                        var placaFiltered = motoristaFilteredInInput.filter((itemInFilter) => itemInFilter.placa === entregas.placa);
+
+                        if (placaFiltered.length > placaCount) {
+                            placaAux = entregas.placa;
+                            placaCount = placaFiltered.length;
+                        }
+                    });
 
                     motoristaFilteredInInput.forEach((entregas) => {
                         var clienteFiltered = dataListAux.filter((itemInFilter) => itemInFilter.codigoDoCliente === entregas.codigoDoCliente);
 
                         if (clienteFiltered.length === 0) {
                             dataListAux.push({
-                                placa: entregas.placa,
+                                placa: placaAux,
                                 motorista: entregas.motorista,
                                 cidade: entregas.cidade,
                                 codigoDoCliente: entregas.codigoDoCliente,
@@ -310,7 +342,6 @@ class RavexController {
                     efetividadePerc: element.pesoEntregue / element.pesoTotal,
                 });
             });
-
             // -------------------------------------------DEVOLUCOES--------------------------------------------
 
             var devolucoesInputData: DevolucoesInputModel[] = [];
@@ -341,7 +372,9 @@ class RavexController {
 
                 let ravexFiltered = ravexData.filter(
                     (itemInFilter) =>
-                        itemInFilter["Número NF"] === devolucoesInputData[i].nf && (itemInFilter["Transportadora"] === "Maggi Motos" || ravexData[i]["Transportadora"] === "R3 Transportes") && itemInFilter["Status NF"].toLowerCase().includes("devolução")
+                        itemInFilter["Número NF"] === devolucoesInputData[i].nf &&
+                        (itemInFilter["Transportadora"] === "Maggi Motos" || ravexData[i]["Transportadora"] === "R3 Transportes") &&
+                        itemInFilter["Status NF"].toLowerCase().includes("devolução")
                 );
                 let devFiltered = devolucoesOutputData.filter((itemInFilter) => itemInFilter.nf === devolucoesInputData[i].nf);
 
@@ -366,7 +399,10 @@ class RavexController {
                 let devFiltered = devolucoesErrosOutputData.filter((itemInFilter) => itemInFilter.nf === devolucoesInputData[i].nf);
 
                 if (devFiltered.length === 0) {
-                    let devolFiltered = ravexData.filter((itemInFilter) => itemInFilter["Número NF"] === devolucoesInputData[i].nf && (itemInFilter["Transportadora"] === "Maggi Motos" || ravexData[i]["Transportadora"] === "R3 Transportes"));
+                    let devolFiltered = ravexData.filter(
+                        (itemInFilter) =>
+                            itemInFilter["Número NF"] === devolucoesInputData[i].nf && (itemInFilter["Transportadora"] === "Maggi Motos" || ravexData[i]["Transportadora"] === "R3 Transportes")
+                    );
                     if (devolFiltered.length > 0) {
                         let devolFilteredAux = devolFiltered.filter((itemInFilter) => itemInFilter["Status NF"].toLowerCase().includes("devolução"));
                         if (devolFilteredAux.length === 0) {
@@ -426,7 +462,6 @@ class RavexController {
                     }
                 }
             }
-
             // -------------------------------------------WRITE EXCEL-------------------------------------------
             // const dataAuxWrite = [
             //     { name: 'Diary', code: 'diary_code', author: 'Pagorn' },
@@ -453,7 +488,6 @@ class RavexController {
             //     }
             // });
             // -------------------------------------------WRITE EXCEL-------------------------------------------
-
             return res.send({ message: "Dados lidos com sucesso.", data, lateData, minDate: new Date(minDateTime), maxDate: new Date(maxDateTime), devolucoesOutputData, devolucoesErrosOutputData });
         } catch {
             return res.status(400).send({ message: "Falha na geração da planilha de desempenho." });
