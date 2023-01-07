@@ -63,6 +63,12 @@ class RavexController {
             .replace(/[ç]/g, "c")
             .toLowerCase();
     }
+    static removeCHAlicensePlate(licensePlate) {
+        var licensePlateSplit = licensePlate.split("", 3);
+        if (licensePlateSplit[0].toUpperCase() === "C" && licensePlateSplit[1].toUpperCase() === "H" && licensePlateSplit[2].toUpperCase() === "A")
+            return false;
+        return true;
+    }
     manipulateData(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
@@ -118,8 +124,15 @@ class RavexController {
                 var maxDateTime = 0;
                 var nowDate = new Date().getTime();
                 for (let i = 0; i < ravexData.length; i++) {
-                    if (ravexData[i]["Transportadora"] === "Maggi Motos" || ravexData[i]["Transportadora"] === "R3 Transportes") {
+                    if ((ravexData[i]["Transportadora"] === "Maggi Motos" || ravexData[i]["Transportadora"] === "R3 Transportes") && RavexController.removeCHAlicensePlate(ravexData[i]["Placa"])) {
+                        var dateSplit = ravexData[i]["Data estimada de entrega"].split(" ");
+                        var dateAux = (0, financeiroController_1.transformDate)(dateSplit[0]).getTime();
+                        if (dateAux < minDateTime && dateAux > 946684800000)
+                            minDateTime = dateAux;
+                        if (dateAux > maxDateTime)
+                            maxDateTime = dateAux;
                         var model = {
+                            date: new Date(dateAux),
                             placa: ravexData[i]["Placa"],
                             motorista: ravexData[i]["Motorista"] === "" ? "Sem nome" : ravexData[i]["Motorista"],
                             cidade: ravexData[i]["Cidade"],
@@ -132,12 +145,6 @@ class RavexController {
                             statusNF: RavexController.statusIdentify(ravexData[i]["Status NF"]),
                         };
                         dataInput.push(model);
-                        var dateSplit = ravexData[i]["Data estimada de entrega"].split(" ");
-                        var dateAux = (0, financeiroController_1.transformDate)(dateSplit[0]).getTime();
-                        if (dateAux < minDateTime && dateAux > 946684800000)
-                            minDateTime = dateAux;
-                        if (dateAux > maxDateTime)
-                            maxDateTime = dateAux;
                         if (ravexData[i]["Anomalia"] !== "") {
                             var lateAux = {
                                 date: new Date(dateAux),
@@ -174,9 +181,10 @@ class RavexController {
                             }
                         });
                         motoristaFilteredInInput.forEach((entregas) => {
-                            var clienteFiltered = dataListAux.filter((itemInFilter) => itemInFilter.codigoDoCliente === entregas.codigoDoCliente);
+                            var clienteFiltered = dataListAux.filter((itemInFilter) => itemInFilter.codigoDoCliente === entregas.codigoDoCliente && itemInFilter.date.getTime() === entregas.date.getTime());
                             if (clienteFiltered.length === 0) {
                                 dataListAux.push({
+                                    date: entregas.date,
                                     placa: placaAux,
                                     motorista: entregas.motorista,
                                     cidade: entregas.cidade,
@@ -204,6 +212,7 @@ class RavexController {
                             }
                         });
                         var dataAux = {
+                            date: new Date(),
                             placa: dataListAux[0].placa,
                             motorista: dataListAux[0].motorista,
                             cidade: dataListAux[0].cidade,

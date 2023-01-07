@@ -7,6 +7,7 @@ import crypto from "crypto";
 import { transformDate } from "./financeiroController";
 
 type RavexInputModel = {
+    date: Date;
     placa: string;
     motorista: string;
     cidade: string;
@@ -20,6 +21,7 @@ type RavexInputModel = {
 };
 
 type RavexPropsModel = {
+    date: Date;
     placa: string;
     motorista: string;
     cidade: string;
@@ -135,6 +137,13 @@ class RavexController {
             .toLowerCase();
     }
 
+    private static removeCHAlicensePlate(licensePlate: string): boolean {
+        var licensePlateSplit = licensePlate.split("", 3);
+        if (licensePlateSplit[0].toUpperCase() === "C" && licensePlateSplit[1].toUpperCase() === "H" && licensePlateSplit[2].toUpperCase() === "A") return false;
+
+        return true;
+    }
+
     public async manipulateData(req: Request, res: Response) {
         try {
             const files = req.files as { [fieldname: string]: Express.Multer.File[] };
@@ -200,8 +209,14 @@ class RavexController {
             var nowDate = new Date().getTime();
 
             for (let i = 0; i < ravexData.length; i++) {
-                if (ravexData[i]["Transportadora"] === "Maggi Motos" || ravexData[i]["Transportadora"] === "R3 Transportes") {
+                if ((ravexData[i]["Transportadora"] === "Maggi Motos" || ravexData[i]["Transportadora"] === "R3 Transportes") && RavexController.removeCHAlicensePlate(ravexData[i]["Placa"])) {
+                    var dateSplit = ravexData[i]["Data estimada de entrega"].split(" ");
+                    var dateAux = transformDate(dateSplit[0]).getTime();
+                    if (dateAux < minDateTime && dateAux > 946684800000) minDateTime = dateAux;
+                    if (dateAux > maxDateTime) maxDateTime = dateAux;
+
                     var model: RavexInputModel = {
+                        date: new Date(dateAux),
                         placa: ravexData[i]["Placa"],
                         motorista: ravexData[i]["Motorista"] === "" ? "Sem nome" : ravexData[i]["Motorista"],
                         cidade: ravexData[i]["Cidade"],
@@ -215,11 +230,6 @@ class RavexController {
                     };
 
                     dataInput.push(model);
-
-                    var dateSplit = ravexData[i]["Data estimada de entrega"].split(" ");
-                    var dateAux = transformDate(dateSplit[0]).getTime();
-                    if (dateAux < minDateTime && dateAux > 946684800000) minDateTime = dateAux;
-                    if (dateAux > maxDateTime) maxDateTime = dateAux;
 
                     if (ravexData[i]["Anomalia"] !== "") {
                         var lateAux: RavexLateOutputModel = {
@@ -269,10 +279,13 @@ class RavexController {
                     });
 
                     motoristaFilteredInInput.forEach((entregas) => {
-                        var clienteFiltered = dataListAux.filter((itemInFilter) => itemInFilter.codigoDoCliente === entregas.codigoDoCliente);
+                        var clienteFiltered = dataListAux.filter(
+                            (itemInFilter) => itemInFilter.codigoDoCliente === entregas.codigoDoCliente && itemInFilter.date.getTime() === entregas.date.getTime()
+                        );
 
                         if (clienteFiltered.length === 0) {
                             dataListAux.push({
+                                date: entregas.date,
                                 placa: placaAux,
                                 motorista: entregas.motorista,
                                 cidade: entregas.cidade,
@@ -301,6 +314,7 @@ class RavexController {
                     });
 
                     var dataAux: RavexPropsModel = {
+                        date: new Date(),
                         placa: dataListAux[0].placa,
                         motorista: dataListAux[0].motorista,
                         cidade: dataListAux[0].cidade,
